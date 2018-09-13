@@ -408,6 +408,34 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, Client* cl
 			log("jsonParse", "Invalid data");
 		}
 
+	} else if (strcmp("getGroupCard", method->valuestring) == 0) {
+
+		const cJSON* group = cJSON_GetObjectItemCaseSensitive(params, "group");
+		const cJSON* qq = cJSON_GetObjectItemCaseSensitive(params, "qq");
+
+		if(cJSON_IsString(id) && cJSON_IsString(group) && cJSON_IsString(qq)) {
+			log("jsonRPC", "Client call getGroupCard method");
+
+			cJSON* root = cJSON_CreateObject();
+			cJSON_AddItemToObject(root, "id", cJSON_CreateString(id->valuestring));
+
+			const char* groupCard = GBKToUTF8(QL_getGroupCard(group->valuestring, qq->valuestring, authCode));
+			cJSON_AddItemToObject(root, "result", cJSON_CreateString(groupCard));
+
+			int* newLen;
+			const char* jsonStr = cJSON_PrintUnformatted(root);
+			const char* frame = convertToWebSocketFrame(jsonStr, frameType_text, strlen(jsonStr), &newLen);
+			socketSend(client->socket, frame, newLen);
+
+			cJSON_Delete(root);
+			free(groupCard);
+			free(jsonStr);
+			free(frame);
+
+		} else {
+			log("jsonParse", "Invalid data");
+		}
+
 	}
 
 	cJSON_Delete(json);
