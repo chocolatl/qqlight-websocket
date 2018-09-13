@@ -19,7 +19,7 @@ QQLight机器人（原Amanda QQ）接口的WebSocket协议实现
 这是一个复读机（Echo）的Javascript示例，可以直接运行在浏览器上：
 
 ```js
-var ws = new WebSocket('ws://localhost:49632');
+var ws = new WebSocket('ws://localhost:49632/');
 ws.onmessage = function(ev) {
     var data = JSON.parse(ev.data);
     var params = data.params;
