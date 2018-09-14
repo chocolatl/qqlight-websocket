@@ -242,8 +242,6 @@ int wsShakeHands(const char* recvBuff, int recvLen, Client* client) {
 }
 
 void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, Client* client) {
-
-	char buff[1024];
 	
 	// 注意，payload的文本数据不是以\0结尾
 	log("wsClientDataHandle","Payload data is %.*s", payloadLen > 128 ? 128 : (unsigned int)payloadLen, payload);
@@ -253,236 +251,218 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, Client* cl
 	cJSON *json = cJSON_ParseWithOpts(payload, &parseEnd, 0);
 
 	if(json == NULL) {
-
 		const char *error_ptr = cJSON_GetErrorPtr();
-
 		if (error_ptr != NULL) {
 			log("jsonParse", "Error before: %d", error_ptr - payload);
 		}
-
 		return;
 	}
 
 	// 公有字段
-	const cJSON* id = cJSON_GetObjectItemCaseSensitive(json, "id");
-	const cJSON* method = cJSON_GetObjectItemCaseSensitive(json, "method");
-	const cJSON* params = cJSON_GetObjectItemCaseSensitive(json, "params");
+	const cJSON* j_id 	  = cJSON_GetObjectItemCaseSensitive(json, "id");		// cJSON_GetObjectItemCaseSensitive获取不存在的字段时会返回NULL
+	const cJSON* j_method = cJSON_GetObjectItemCaseSensitive(json, "method");
+	const cJSON* j_params = cJSON_GetObjectItemCaseSensitive(json, "params");
 
-	if(!cJSON_IsString(method)) {
+	const cJSON_bool e_id 	  = cJSON_IsString(j_id);		// 如果j_xx的值为NULL的时候也会返回FALSE，所以e_xx为TRUE时可以保证字段存在且类型正确
+	const cJSON_bool e_method = cJSON_IsString(j_method);
+	const cJSON_bool e_params = cJSON_IsString(j_params);
+
+	const char* v_id 	 = e_id 	? j_id->valuestring		: NULL;
+	const char* v_method = e_method ? j_method->valuestring	: NULL;
+	const char* v_params = e_params ? j_params->valuestring	: NULL;
+
+	if(!e_method) {
 		cJSON_Delete(json);
 		return;
 	}
 
-	log("jsonRPC", "Client call '%s' method", method->valuestring);
+	// 参数字段
+	const cJSON* j_type 	= cJSON_GetObjectItemCaseSensitive(j_params, "type");		// 即使j_params为NULL也是安全的，返回的结果也是NULL
+	const cJSON* j_group 	= cJSON_GetObjectItemCaseSensitive(j_params, "group");
+	const cJSON* j_qq 		= cJSON_GetObjectItemCaseSensitive(j_params, "qq");
+	const cJSON* j_content 	= cJSON_GetObjectItemCaseSensitive(j_params, "content");
+	const cJSON* j_msgid 	= cJSON_GetObjectItemCaseSensitive(j_params, "msgid");
+	const cJSON* j_message  = cJSON_GetObjectItemCaseSensitive(j_params, "message");
+	const cJSON* j_object 	= cJSON_GetObjectItemCaseSensitive(j_params, "object");
+	const cJSON* j_data 	= cJSON_GetObjectItemCaseSensitive(j_params, "data");
+
+	const cJSON_bool e_type 	= cJSON_IsNumber(j_type);
+	const cJSON_bool e_group 	= cJSON_IsString(j_group);
+	const cJSON_bool e_qq 		= cJSON_IsString(j_qq);
+	const cJSON_bool e_content 	= cJSON_IsString(j_content);
+	const cJSON_bool e_msgid 	= cJSON_IsString(j_msgid);
+	const cJSON_bool e_message  = cJSON_IsString(j_message);
+	const cJSON_bool e_object 	= cJSON_IsString(j_object);
+	const cJSON_bool e_data 	= cJSON_IsString(j_data);
+
+	const int*  v_type 		= e_type 	? j_type->valueint 		 : NULL;
+	const char* v_group 	= e_group 	? j_group->valuestring 	 : NULL;
+	const char* v_qq 		= e_qq 		? j_qq->valuestring 	 : NULL;
+	const char* v_content 	= e_content ? j_content->valuestring : NULL;
+	const char* v_msgid 	= e_msgid 	? j_msgid->valuestring 	 : NULL;
+	const char* v_message  	= e_message ? j_message->valuestring : NULL;
+	const char* v_object 	= e_object 	? j_object->valuestring  : NULL;
+	const char* v_data 		= e_data 	? j_data->valuestring 	 : NULL;
+
+	log("jsonRPC", "Client call '%s' method", v_method);
+
+	#define PARAMS_CHECK(condition) if(!(condition)) {log("jsonParse", "Invalid data"); goto RPCParseEnd;}
+	#define METHOD_IS(name) (strcmp(name, v_method) == 0)
 	
-	if(strcmp("sendMessage", method->valuestring) == 0) {
+	if(METHOD_IS("sendMessage")) {
 
-		const cJSON* type = cJSON_GetObjectItemCaseSensitive(params, "type");
-		const cJSON* group = cJSON_GetObjectItemCaseSensitive(params, "group");
-		const cJSON* qq = cJSON_GetObjectItemCaseSensitive(params, "qq");
-		const cJSON* content = cJSON_GetObjectItemCaseSensitive(params, "content");
+		PARAMS_CHECK(e_type && e_content && (e_qq || e_group));
 
-		if(
-			cJSON_IsNumber(type) && cJSON_IsString(content) && 
-			(cJSON_IsString(qq) || cJSON_IsString(group))
-		) {
-			char* gbkText = UTF8ToGBK(content->valuestring);
-			QL_sendMessage(type->valueint, cJSON_IsString(content) ? group->valuestring : "", cJSON_IsString(qq) ? qq->valuestring : "", gbkText, authCode);
-			free(gbkText);
+		char* gbkText = UTF8ToGBK(v_content);
+		QL_sendMessage(v_type, e_content ? v_group : "", e_qq ? v_qq : "", gbkText, authCode);
+		free(gbkText);
+
+	} else if (METHOD_IS("withdrawMessage")) {
+
+		PARAMS_CHECK(e_group && e_msgid);
+
+		QL_withdrawMessage(v_group, v_msgid, authCode);
+
+	} else if (METHOD_IS("getFriendList")) {
+
+		PARAMS_CHECK(e_id);
+
+		cJSON* root = cJSON_CreateObject();
+		cJSON_AddItemToObject(root, "id", cJSON_CreateString(v_id));
+
+		const char* friendList = GBKToUTF8(QL_getFriendList(authCode));
+		cJSON_AddItemToObject(root, "result", cJSON_Parse(friendList));
+
+		int* newLen;
+		const char* jsonStr = cJSON_PrintUnformatted(root);
+		const char* frame = convertToWebSocketFrame(jsonStr, frameType_text, strlen(jsonStr), &newLen);
+		socketSend(client->socket, frame, newLen);
+
+		cJSON_Delete(root);
+		free(friendList);
+		free(jsonStr);
+		free(frame);
+
+	} else if (METHOD_IS("addFriend")) {
+
+		PARAMS_CHECK(e_id);
+
+		if(!e_message) {
+			QL_addFriend(v_qq, "", authCode);
 		} else {
-			log("jsonParse", "Invalid data");
+			const char* text = UTF8ToGBK(v_message);
+			QL_addFriend(v_qq, text, authCode);
+			free(text);
 		}
 
-	} else if (strcmp("withdrawMessage", method->valuestring) == 0) {
+	} else if (METHOD_IS("deleteFriend")) {
 
-		const cJSON* group = cJSON_GetObjectItemCaseSensitive(params, "group");
-		const cJSON* msgid = cJSON_GetObjectItemCaseSensitive(params, "msgid");
+		PARAMS_CHECK(e_id);
 
-		if(cJSON_IsString(group) && cJSON_IsString(msgid)) {
-			QL_withdrawMessage(group->valuestring, msgid->valuestring, authCode);
+		QL_deleteFriend(v_qq, authCode);
+
+	} else if (METHOD_IS("getGroupList")) {
+
+		PARAMS_CHECK(e_id);
+
+		cJSON* root = cJSON_CreateObject();
+		cJSON_AddItemToObject(root, "id", cJSON_CreateString(v_id));
+
+		const char* groupList = GBKToUTF8(QL_getGroupList(authCode));
+		cJSON_AddItemToObject(root, "result", cJSON_Parse(groupList));
+
+		int* newLen;
+		const char* jsonStr = cJSON_PrintUnformatted(root);
+		const char* frame = convertToWebSocketFrame(jsonStr, frameType_text, strlen(jsonStr), &newLen);
+		socketSend(client->socket, frame, newLen);
+
+		cJSON_Delete(root);
+		free(groupList);
+		free(jsonStr);
+		free(frame);
+
+	} else if (METHOD_IS("getGroupMemberList")) {
+
+		PARAMS_CHECK(e_id && e_group);
+
+		cJSON* root = cJSON_CreateObject();
+		cJSON_AddItemToObject(root, "id", cJSON_CreateString(v_id));
+
+		const char* groupMemberList = GBKToUTF8(QL_getGroupMemberList(v_group, authCode));
+		cJSON_AddItemToObject(root, "result", cJSON_Parse(groupMemberList));
+
+		int* newLen;
+		const char* jsonStr = cJSON_PrintUnformatted(root);
+		const char* frame = convertToWebSocketFrame(jsonStr, frameType_text, strlen(jsonStr), &newLen);
+		socketSend(client->socket, frame, newLen);
+
+		cJSON_Delete(root);
+		free(groupMemberList);
+		free(jsonStr);
+		free(frame);
+
+	} else if (METHOD_IS("addGroup")) {
+
+		PARAMS_CHECK(e_group);
+
+		if(!e_message) {
+			QL_addGroup(v_group, "", authCode);
 		} else {
-			log("jsonParse", "Invalid data");
+			const char* text = UTF8ToGBK(v_message);
+			QL_addGroup(v_group, text, authCode);
+			free(text);
 		}
 
-	} else if (strcmp("getFriendList", method->valuestring) == 0) {
+	} else if (METHOD_IS("quitGroup")) {
 
-		if(cJSON_IsString(id)) {
-			cJSON* root = cJSON_CreateObject();
-			cJSON_AddItemToObject(root, "id", cJSON_CreateString(id->valuestring));
+		PARAMS_CHECK(e_group);
 
-			const char* friendList = GBKToUTF8(QL_getFriendList(authCode));
-			cJSON_AddItemToObject(root, "result", cJSON_Parse(friendList));
+		QL_quitGroup(v_group, authCode);
 
-			int* newLen;
-			const char* jsonStr = cJSON_PrintUnformatted(root);
-			const char* frame = convertToWebSocketFrame(jsonStr, frameType_text, strlen(jsonStr), &newLen);
-			socketSend(client->socket, frame, newLen);
+	} else if (METHOD_IS("getGroupCard")) {
 
-			cJSON_Delete(root);
-			free(friendList);
-			free(jsonStr);
-			free(frame);
-		} else {
-			log("jsonParse", "Invalid data");
-		}
+		PARAMS_CHECK(e_id && e_group && e_qq);
 
-	} else if (strcmp("addFriend", method->valuestring) == 0) {
+		cJSON* root = cJSON_CreateObject();
+		cJSON_AddItemToObject(root, "id", cJSON_CreateString(v_id));
 
-		const cJSON* qq = cJSON_GetObjectItemCaseSensitive(params, "qq");
-		const cJSON* message = cJSON_GetObjectItemCaseSensitive(params, "message");
+		const char* groupCard = GBKToUTF8(QL_getGroupCard(v_group, v_qq, authCode));
+		cJSON_AddItemToObject(root, "result", cJSON_CreateString(groupCard));
 
-		if(cJSON_IsString(qq)) {
-			if(!cJSON_IsString(message)) {
-				QL_addFriend(qq->valuestring, "", authCode);
-			} else {
-				const char* text = UTF8ToGBK(message->valuestring);
-				QL_addFriend(qq->valuestring, text, authCode);
-				free(text);
-			}
-		} else {
-			log("jsonParse", "Invalid data");
-		}
+		int* newLen;
+		const char* jsonStr = cJSON_PrintUnformatted(root);
+		const char* frame = convertToWebSocketFrame(jsonStr, frameType_text, strlen(jsonStr), &newLen);
+		socketSend(client->socket, frame, newLen);
 
-	} else if (strcmp("deleteFriend", method->valuestring) == 0) {
+		cJSON_Delete(root);
+		free(groupCard);
+		free(jsonStr);
+		free(frame);
 
-		const cJSON* qq = cJSON_GetObjectItemCaseSensitive(params, "qq");
+	} else if (METHOD_IS("uploadImage")) {
 
-		if(cJSON_IsString(qq)) {
-			QL_deleteFriend(qq->valuestring, authCode);
-		} else {
-			log("jsonParse", "Invalid data");
-		}
+		PARAMS_CHECK(e_id && e_type && e_object && e_data);
 
-	} else if (strcmp("getGroupList", method->valuestring) == 0) {
+		cJSON* root = cJSON_CreateObject();
+		cJSON_AddItemToObject(root, "id", cJSON_CreateString(v_id));
 
-		if(cJSON_IsString(id)) {
-			cJSON* root = cJSON_CreateObject();
-			cJSON_AddItemToObject(root, "id", cJSON_CreateString(id->valuestring));
+		const char* guid = QL_uploadImage(v_type, v_object, v_data, authCode);
+		cJSON_AddItemToObject(root, "result", cJSON_CreateString(guid));
 
-			const char* groupList = GBKToUTF8(QL_getGroupList(authCode));
-			cJSON_AddItemToObject(root, "result", cJSON_Parse(groupList));
+		int* newLen;
+		const char* jsonStr = cJSON_PrintUnformatted(root);
+		const char* frame = convertToWebSocketFrame(jsonStr, frameType_text, strlen(jsonStr), &newLen);
+		socketSend(client->socket, frame, newLen);
 
-			int* newLen;
-			const char* jsonStr = cJSON_PrintUnformatted(root);
-			const char* frame = convertToWebSocketFrame(jsonStr, frameType_text, strlen(jsonStr), &newLen);
-			socketSend(client->socket, frame, newLen);
-
-			cJSON_Delete(root);
-			free(groupList);
-			free(jsonStr);
-			free(frame);
-		} else {
-			log("jsonParse", "Invalid data");
-		}
-
-	} else if (strcmp("getGroupMemberList", method->valuestring) == 0) {
-
-		const cJSON* group = cJSON_GetObjectItemCaseSensitive(params, "group");
-
-		if(cJSON_IsString(id) && cJSON_IsString(group)) {
-			cJSON* root = cJSON_CreateObject();
-			cJSON_AddItemToObject(root, "id", cJSON_CreateString(id->valuestring));
-
-			const char* groupMemberList = GBKToUTF8(QL_getGroupMemberList(group->valuestring, authCode));
-			cJSON_AddItemToObject(root, "result", cJSON_Parse(groupMemberList));
-
-			int* newLen;
-			const char* jsonStr = cJSON_PrintUnformatted(root);
-			const char* frame = convertToWebSocketFrame(jsonStr, frameType_text, strlen(jsonStr), &newLen);
-			socketSend(client->socket, frame, newLen);
-
-			cJSON_Delete(root);
-			free(groupMemberList);
-			free(jsonStr);
-			free(frame);
-		} else {
-			log("jsonParse", "Invalid data");
-		}
-
-	} else if (strcmp("addGroup", method->valuestring) == 0) {
-
-		const cJSON* group = cJSON_GetObjectItemCaseSensitive(params, "group");
-		const cJSON* message = cJSON_GetObjectItemCaseSensitive(params, "message");
-
-		if(cJSON_IsString(group)) {
-			if(!cJSON_IsString(message)) {
-				QL_addGroup(group->valuestring, "", authCode);
-			} else {
-				const char* text = UTF8ToGBK(message->valuestring);
-				QL_addGroup(group->valuestring, text, authCode);
-				free(text);
-			}
-		} else {
-			log("jsonParse", "Invalid data");
-		}
-
-	} else if (strcmp("quitGroup", method->valuestring) == 0) {
-
-		const cJSON* group = cJSON_GetObjectItemCaseSensitive(params, "group");
-
-		if(cJSON_IsString(group)) {
-			QL_quitGroup(group->valuestring, authCode);
-		} else {
-			log("jsonParse", "Invalid data");
-		}
-
-	} else if (strcmp("getGroupCard", method->valuestring) == 0) {
-
-		const cJSON* group = cJSON_GetObjectItemCaseSensitive(params, "group");
-		const cJSON* qq = cJSON_GetObjectItemCaseSensitive(params, "qq");
-
-		if(cJSON_IsString(id) && cJSON_IsString(group) && cJSON_IsString(qq)) {
-
-			cJSON* root = cJSON_CreateObject();
-			cJSON_AddItemToObject(root, "id", cJSON_CreateString(id->valuestring));
-
-			const char* groupCard = GBKToUTF8(QL_getGroupCard(group->valuestring, qq->valuestring, authCode));
-			cJSON_AddItemToObject(root, "result", cJSON_CreateString(groupCard));
-
-			int* newLen;
-			const char* jsonStr = cJSON_PrintUnformatted(root);
-			const char* frame = convertToWebSocketFrame(jsonStr, frameType_text, strlen(jsonStr), &newLen);
-			socketSend(client->socket, frame, newLen);
-
-			cJSON_Delete(root);
-			free(groupCard);
-			free(jsonStr);
-			free(frame);
-
-		} else {
-			log("jsonParse", "Invalid data");
-		}
-
-	} else if (strcmp("uploadImage", method->valuestring) == 0) {
-
-		const cJSON* type = cJSON_GetObjectItemCaseSensitive(params, "type");
-		const cJSON* object = cJSON_GetObjectItemCaseSensitive(params, "object");
-		const cJSON* data = cJSON_GetObjectItemCaseSensitive(params, "data");
-
-		if(cJSON_IsString(id) && cJSON_IsNumber(type) && cJSON_IsString(object) && cJSON_IsString(data)) {
-
-			cJSON* root = cJSON_CreateObject();
-			cJSON_AddItemToObject(root, "id", cJSON_CreateString(id->valuestring));
-
-			const char* guid = QL_uploadImage(type->valueint, object->valuestring, data->valuestring, authCode);
-			cJSON_AddItemToObject(root, "result", cJSON_CreateString(guid));
-
-			int* newLen;
-			const char* jsonStr = cJSON_PrintUnformatted(root);
-			const char* frame = convertToWebSocketFrame(jsonStr, frameType_text, strlen(jsonStr), &newLen);
-			socketSend(client->socket, frame, newLen);
-
-			cJSON_Delete(root);
-			free(jsonStr);
-			free(frame);
-
-		} else {
-			log("jsonParse", "Invalid data");
-		}
+		cJSON_Delete(root);
+		free(jsonStr);
+		free(frame);
 
 	} else {
-		log("jsonRPC", "Unknown method '%s'", method->valuestring);
+		log("jsonRPC", "Unknown method '%s'", v_method);
 	}
+
+	RPCParseEnd:
 
 	cJSON_Delete(json);
 }
