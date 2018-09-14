@@ -436,6 +436,34 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, Client* cl
 			log("jsonParse", "Invalid data");
 		}
 
+	} else if (strcmp("uploadImage", method->valuestring) == 0) {
+
+		const cJSON* type = cJSON_GetObjectItemCaseSensitive(params, "type");
+		const cJSON* object = cJSON_GetObjectItemCaseSensitive(params, "object");
+		const cJSON* data = cJSON_GetObjectItemCaseSensitive(params, "data");
+
+		if(cJSON_IsString(id) && cJSON_IsNumber(type) && cJSON_IsString(object) && cJSON_IsString(data)) {
+			log("jsonRPC", "Client call uploadImage method");
+
+			cJSON* root = cJSON_CreateObject();
+			cJSON_AddItemToObject(root, "id", cJSON_CreateString(id->valuestring));
+
+			const char* guid = QL_uploadImage(type->valueint, object->valuestring, data->valuestring, authCode);
+			cJSON_AddItemToObject(root, "result", cJSON_CreateString(guid));
+
+			int* newLen;
+			const char* jsonStr = cJSON_PrintUnformatted(root);
+			const char* frame = convertToWebSocketFrame(jsonStr, frameType_text, strlen(jsonStr), &newLen);
+			socketSend(client->socket, frame, newLen);
+
+			cJSON_Delete(root);
+			free(jsonStr);
+			free(frame);
+
+		} else {
+			log("jsonParse", "Invalid data");
+		}
+
 	}
 
 	cJSON_Delete(json);

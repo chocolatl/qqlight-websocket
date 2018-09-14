@@ -16,3 +16,4 @@ const char* __stdcall (*QL_getGroupMemberList)(const char* group, const char* au
 void __stdcall (*QL_addGroup)(const char* group, const char* message, const char* authCode);
 void __stdcall (*QL_quitGroup)(const char* group, const char* authCode);
 const char* __stdcall (*QL_getGroupCard)(const char* group, const char* qq, const char* authCode);
+const char* __stdcall (*QL_uploadImage)(int type, const char* object, const char* data, const char* authCode);

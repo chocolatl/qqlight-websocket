@@ -28,7 +28,8 @@ int loadQQLightAPI(void) {
 		(QL_getGroupMemberList = GetProcAddress(libHandle, "Api_GetGroupMemberList")) == NULL ||
 		(QL_addGroup = GetProcAddress(libHandle, "Api_AddGroup")) == NULL ||
 		(QL_quitGroup = GetProcAddress(libHandle, "Api_QuitGroup")) == NULL ||
-		(QL_getGroupCard = GetProcAddress(libHandle, "Api_GetGroupCard")) == NULL
+		(QL_getGroupCard = GetProcAddress(libHandle, "Api_GetGroupCard")) == NULL ||
+		(QL_uploadImage = GetProcAddress(libHandle, "Api_UpLoadPic")) == NULL
 	) {
 		FreeLibrary(libHandle);
 		return -1;
