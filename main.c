@@ -283,8 +283,8 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, Client* cl
 		const cJSON* content = cJSON_GetObjectItemCaseSensitive(params, "content");
 
 		if(
-			cJSON_IsNumber(type) && cJSON_IsString(group) && 
-			(cJSON_IsString(qq) || cJSON_IsString(content))
+			cJSON_IsNumber(type) && cJSON_IsString(content) && 
+			(cJSON_IsString(qq) || cJSON_IsString(group))
 		) {
 			char* gbkText = UTF8ToGBK(content->valuestring);
 			QL_sendMessage(type->valueint, cJSON_IsString(content) ? group->valuestring : "", cJSON_IsString(qq) ? qq->valuestring : "", gbkText, authCode);
