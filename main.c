@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <winsock2.h>
+#include <time.h>
 #include "lib/cjson/cJSON.h"
 #include "lib/sha1/sha1.h"
 #include "lib/base64/b64.h"
@@ -47,15 +48,39 @@ typedef struct ClientSockets {
 
 void log(const char* type, const char* format, ...) {
 	
-	char buff[512];
-	int cnt;
+	// 获取当前时间
+    time_t timer;
+    char datetime[26];
+    struct tm* tm_info;
+
+    time(&timer);
+    tm_info = localtime(&timer);
+    strftime(datetime, 26, "%Y-%m-%d %H:%M:%S", tm_info);
+
+	// 获取日志内容
+	char content[512];
 	va_list arg;
 
 	va_start(arg, format);
-	cnt = vsnprintf(buff, sizeof(buff) - 1, format, arg);
+	vsnprintf(content, sizeof(content) - 1, format, arg);
 	va_end(arg);
 
-	QL_printLog(type, buff, 0, authCode);
+	// 拼接
+	char line[640];
+	int len = sprintf(line, "%s | %-20s | %s\r\n", datetime, type, content);
+
+	FILE *fp;
+	char path[1048];
+
+	sprintf(path, "%s%s", pluginPath, "log.txt");
+
+	if((fp = fopen(path, "a+")) == NULL) {
+		return;
+	}
+
+	fwrite(line, len, 1, fp);
+
+	fclose(fp);
 }
 
 // 返回转换后数据地址，记得free
