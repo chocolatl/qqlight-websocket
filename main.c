@@ -272,6 +272,8 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, Client* cl
 		cJSON_Delete(json);
 		return;
 	}
+
+	log("jsonRPC", "Client call '%s' method", method->valuestring);
 	
 	if(strcmp("sendMessage", method->valuestring) == 0) {
 
@@ -284,7 +286,6 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, Client* cl
 			cJSON_IsNumber(type) && cJSON_IsString(group) && 
 			(cJSON_IsString(qq) || cJSON_IsString(content))
 		) {
-			log("jsonRPC", "Client call sendMessage method");
 			char* gbkText = UTF8ToGBK(content->valuestring);
 			QL_sendMessage(type->valueint, cJSON_IsString(content) ? group->valuestring : "", cJSON_IsString(qq) ? qq->valuestring : "", gbkText, authCode);
 			free(gbkText);
@@ -298,7 +299,6 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, Client* cl
 		const cJSON* msgid = cJSON_GetObjectItemCaseSensitive(params, "msgid");
 
 		if(cJSON_IsString(group) && cJSON_IsString(msgid)) {
-			log("jsonRPC", "Client call withdrawMessage method");
 			QL_withdrawMessage(group->valuestring, msgid->valuestring, authCode);
 		} else {
 			log("jsonParse", "Invalid data");
@@ -307,7 +307,6 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, Client* cl
 	} else if (strcmp("getFriendList", method->valuestring) == 0) {
 
 		if(cJSON_IsString(id)) {
-			log("jsonRPC", "Client call getFriendList method");
 			cJSON* root = cJSON_CreateObject();
 			cJSON_AddItemToObject(root, "id", cJSON_CreateString(id->valuestring));
 
@@ -333,7 +332,6 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, Client* cl
 		const cJSON* message = cJSON_GetObjectItemCaseSensitive(params, "message");
 
 		if(cJSON_IsString(qq)) {
-			log("jsonRPC", "Client call addFriend method");
 			if(!cJSON_IsString(message)) {
 				QL_addFriend(qq->valuestring, "", authCode);
 			} else {
@@ -350,7 +348,6 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, Client* cl
 		const cJSON* qq = cJSON_GetObjectItemCaseSensitive(params, "qq");
 
 		if(cJSON_IsString(qq)) {
-			log("jsonRPC", "Client call deleteFriend method");
 			QL_deleteFriend(qq->valuestring, authCode);
 		} else {
 			log("jsonParse", "Invalid data");
@@ -359,7 +356,6 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, Client* cl
 	} else if (strcmp("getGroupList", method->valuestring) == 0) {
 
 		if(cJSON_IsString(id)) {
-			log("jsonRPC", "Client call getGroupList method");
 			cJSON* root = cJSON_CreateObject();
 			cJSON_AddItemToObject(root, "id", cJSON_CreateString(id->valuestring));
 
@@ -384,7 +380,6 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, Client* cl
 		const cJSON* group = cJSON_GetObjectItemCaseSensitive(params, "group");
 
 		if(cJSON_IsString(id) && cJSON_IsString(group)) {
-			log("jsonRPC", "Client call getGroupMemberList method");
 			cJSON* root = cJSON_CreateObject();
 			cJSON_AddItemToObject(root, "id", cJSON_CreateString(id->valuestring));
 
@@ -410,7 +405,6 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, Client* cl
 		const cJSON* message = cJSON_GetObjectItemCaseSensitive(params, "message");
 
 		if(cJSON_IsString(group)) {
-			log("jsonRPC", "Client call addGroup method");
 			if(!cJSON_IsString(message)) {
 				QL_addGroup(group->valuestring, "", authCode);
 			} else {
@@ -427,7 +421,6 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, Client* cl
 		const cJSON* group = cJSON_GetObjectItemCaseSensitive(params, "group");
 
 		if(cJSON_IsString(group)) {
-			log("jsonRPC", "Client call quitGroup method");
 			QL_quitGroup(group->valuestring, authCode);
 		} else {
 			log("jsonParse", "Invalid data");
@@ -439,7 +432,6 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, Client* cl
 		const cJSON* qq = cJSON_GetObjectItemCaseSensitive(params, "qq");
 
 		if(cJSON_IsString(id) && cJSON_IsString(group) && cJSON_IsString(qq)) {
-			log("jsonRPC", "Client call getGroupCard method");
 
 			cJSON* root = cJSON_CreateObject();
 			cJSON_AddItemToObject(root, "id", cJSON_CreateString(id->valuestring));
@@ -468,7 +460,6 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, Client* cl
 		const cJSON* data = cJSON_GetObjectItemCaseSensitive(params, "data");
 
 		if(cJSON_IsString(id) && cJSON_IsNumber(type) && cJSON_IsString(object) && cJSON_IsString(data)) {
-			log("jsonRPC", "Client call uploadImage method");
 
 			cJSON* root = cJSON_CreateObject();
 			cJSON_AddItemToObject(root, "id", cJSON_CreateString(id->valuestring));
@@ -489,6 +480,8 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, Client* cl
 			log("jsonParse", "Invalid data");
 		}
 
+	} else {
+		log("jsonRPC", "Unknown method '%s'", method->valuestring);
 	}
 
 	cJSON_Delete(json);
