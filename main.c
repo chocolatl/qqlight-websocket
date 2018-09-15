@@ -295,7 +295,7 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, Client* cl
     const cJSON_bool e_object  = cJSON_IsString(j_object);
     const cJSON_bool e_data    = cJSON_IsString(j_data);
 
-    const int*  v_type    = e_type    ?  j_type->valueint        :  NULL;
+    int         v_type    = e_type    ?  j_type->valueint        :  -1;
     const char* v_group   = e_group   ?  j_group->valuestring    :  NULL;
     const char* v_qq      = e_qq      ?  j_qq->valuestring       :  NULL;
     const char* v_content = e_content ?  j_content->valuestring  :  NULL;
