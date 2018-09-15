@@ -1,5 +1,6 @@
 #include <stdbool.h>
 #include <windef.h>
+#include <stdlib.h>
 #include "wsFrame.h"
 
 // 初始化帧结构
@@ -93,7 +94,7 @@ int readWebSocketFrameStream(WsFrame* wsFrame, const char* buff, int len) {
         char* copyStartAddr;
         int requiedLen = wsFrame->buffSize + len; 
 
-        wsFrame->buff = realloc(wsFrame->buff, requiedLen);
+        wsFrame->buff = realloc((void*)wsFrame->buff, requiedLen);
         copyStartAddr = wsFrame->buff + wsFrame->buffSize;
         wsFrame->buffSize = requiedLen;
 

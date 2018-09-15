@@ -148,7 +148,7 @@ int getSecWebSocketAcceptKey(const char* key, char* b64buff, int len) {
     const char* base64 = b64_encode(hash, sizeof(hash));
     strncpy(b64buff, base64, len - 1);
     b64buff[len - 1] = '\0';
-    free(base64);
+    free((void*)base64);
 
     return 0;
 }
@@ -246,7 +246,7 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, Client* cl
     // 注意，payload的文本数据不是以\0结尾
     log("wsClientDataHandle","Payload data is %.*s", payloadLen > 128 ? 128 : (unsigned int)payloadLen, payload);
 
-    char* parseEnd;
+    const char* parseEnd;
 
     cJSON *json = cJSON_ParseWithOpts(payload, &parseEnd, 0);
 
@@ -315,7 +315,7 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, Client* cl
 
         char* gbkText = UTF8ToGBK(v_content);
         QL_sendMessage(v_type, e_content ? v_group : "", e_qq ? v_qq : "", gbkText, authCode);
-        free(gbkText);
+        free((void*)gbkText);
 
     } else if (METHOD_IS("withdrawMessage")) {
 
@@ -339,9 +339,9 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, Client* cl
         socketSend(client->socket, frame, newLen);
 
         cJSON_Delete(root);
-        free(friendList);
-        free(jsonStr);
-        free(frame);
+        free((void*)friendList);
+        free((void*)jsonStr);
+        free((void*)frame);
 
     } else if (METHOD_IS("addFriend")) {
 
@@ -352,7 +352,7 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, Client* cl
         } else {
             const char* text = UTF8ToGBK(v_message);
             QL_addFriend(v_qq, text, authCode);
-            free(text);
+            free((void*)text);
         }
 
     } else if (METHOD_IS("deleteFriend")) {
@@ -377,9 +377,9 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, Client* cl
         socketSend(client->socket, frame, newLen);
 
         cJSON_Delete(root);
-        free(groupList);
-        free(jsonStr);
-        free(frame);
+        free((void*)groupList);
+        free((void*)jsonStr);
+        free((void*)frame);
 
     } else if (METHOD_IS("getGroupMemberList")) {
 
@@ -397,9 +397,9 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, Client* cl
         socketSend(client->socket, frame, newLen);
 
         cJSON_Delete(root);
-        free(groupMemberList);
-        free(jsonStr);
-        free(frame);
+        free((void*)groupMemberList);
+        free((void*)jsonStr);
+        free((void*)frame);
 
     } else if (METHOD_IS("addGroup")) {
 
@@ -410,7 +410,7 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, Client* cl
         } else {
             const char* text = UTF8ToGBK(v_message);
             QL_addGroup(v_group, text, authCode);
-            free(text);
+            free((void*)text);
         }
 
     } else if (METHOD_IS("quitGroup")) {
@@ -435,9 +435,9 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, Client* cl
         socketSend(client->socket, frame, newLen);
 
         cJSON_Delete(root);
-        free(groupCard);
-        free(jsonStr);
-        free(frame);
+        free((void*)groupCard);
+        free((void*)jsonStr);
+        free((void*)frame);
 
     } else if (METHOD_IS("uploadImage")) {
 
@@ -455,8 +455,8 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, Client* cl
         socketSend(client->socket, frame, newLen);
 
         cJSON_Delete(root);
-        free(jsonStr);
-        free(frame);
+        free((void*)jsonStr);
+        free((void*)frame);
 
     } else {
         log("jsonRPC", "Unknown method '%s'", v_method);
@@ -522,7 +522,7 @@ int wsClientDataHandle(const char* recvBuff, int recvLen, Client* client) {
             const char* frame = convertToWebSocketFrame(payload, frameType_pong, payloadLen, &newLen);
             log("wsClientDataHandle", "pong");
             socketSend(client->socket, frame, newLen);
-            free(frame);
+            free((void*)frame);
         }
 
         // 处理文本数据
@@ -820,9 +820,9 @@ DllExport(int) Event_GetNewMsg (
     }
 
     cJSON_Delete(root);
-    free(u8Content);
-    free(jsonStr);
-    free(frame);
+    free((void*)u8Content);
+    free((void*)jsonStr);
+    free((void*)frame);
 
     return 0;    // 返回0下个插件继续处理该事件，返回1拦截此事件不让其他插件执行
 }
