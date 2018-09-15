@@ -154,15 +154,14 @@ int getSecWebSocketAcceptKey(const char* key, char* b64buff, int len) {
 }
 
 // 处理HTTP协议升级为WebSocket协议的握手请求，握手成功返回0，失败返回-1
-// 成功时该函数会通过initWsFrameStruct初始化client的wsFrame
-int wsShakeHands(const char* recvBuff, int recvLen, Client* client) {
+int wsShakeHands(const char* recvBuff, int recvLen, SOCKET socket) {
 
     #define HTTP_MAXLEN 1536
     #define HTTP_400 "HTTP/1.1 400 Bad Request\r\n\r\n"
 
     // HTTP握手包太长，掐了
     if(recvLen > HTTP_MAXLEN) {
-        socketSend(client->socket, HTTP_400, strlen(HTTP_400));
+        send(socket, HTTP_400, strlen(HTTP_400), 0);
         pluginLog("wsShakeHands", "Request too long");
         return -1;
     }
@@ -182,7 +181,7 @@ int wsShakeHands(const char* recvBuff, int recvLen, Client* client) {
         !strstr(recvBuff, "Sec-WebSocket-Version: 13") ||
         !(keyPos = strstr(recvBuff, "Sec-WebSocket-Key: "))
     ) {
-        socketSend(client->socket, HTTP_400, strlen(HTTP_400));
+        send(socket, HTTP_400, strlen(HTTP_400), 0);
         pluginLog("wsShakeHands", "Missing required fields");
         return -1;
     }
@@ -226,10 +225,7 @@ int wsShakeHands(const char* recvBuff, int recvLen, Client* client) {
     int resLen = sprintf(resBuff, resHeader, acptBuff);
 
     // Send data to the client
-    int iSendResult = socketSend(client->socket, resBuff, resLen);
-
-    client->protocol = websocketProtocol;
-    initWsFrameStruct(&client->wsFrame);        // 初始化ws帧结构
+    int iSendResult = send(socket, resBuff, resLen, 0);
     
     if(iSendResult == SOCKET_ERROR) {
         return -1;
@@ -597,8 +593,13 @@ void receiveComingData(ClientSockets* clientSockets) {
                     int result = wsClientDataHandle(recvbuf, iResult, &clientSockets->clients[i]);
                     if(result == -1) goto removeClientSocket;
                 } else {
-                    int result = wsShakeHands(recvbuf, iResult, &clientSockets->clients[i]);
-                    if(result != 0) goto removeClientSocket;
+                    int result = wsShakeHands(recvbuf, iResult, clientSockets->clients[i].socket);
+                    if(result != 0) {
+                        goto removeClientSocket;
+                    } else {
+                        clientSockets->clients[i].protocol = websocketProtocol;
+                        initWsFrameStruct(&clientSockets->clients[i].wsFrame);        // 初始化ws帧结构
+                    }
                 }
 
             } else {
