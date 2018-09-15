@@ -14,15 +14,15 @@
 #define DllExport(returnType) __declspec(dllexport) returnType __stdcall
 
 const char* PLUGIN_INFO = 
-	"pluginID=websocket.protocol;\r\n"
-	"pluginName=WebSocket Protocol;\r\n"
-	"pluginBrief="
-		"Enable you to use QQLight API in any language you like via WebSocket.\r\n\r\n"
-		"GitHub:\r\nhttps://github.com/Chocolatl/qqlight-websocket;\r\n"
-	"pluginVersion=0.1.0;\r\n"
-	"pluginSDK=3;\r\n"
-	"pluginAuthor=Chocolatl;\r\n"
-	"pluginWindowsTitle=;"
+    "pluginID=websocket.protocol;\r\n"
+    "pluginName=WebSocket Protocol;\r\n"
+    "pluginBrief="
+        "Enable you to use QQLight API in any language you like via WebSocket.\r\n\r\n"
+        "GitHub:\r\nhttps://github.com/Chocolatl/qqlight-websocket;\r\n"
+    "pluginVersion=0.1.0;\r\n"
+    "pluginSDK=3;\r\n"
+    "pluginAuthor=Chocolatl;\r\n"
+    "pluginWindowsTitle=;"
 ;
 
 char authCode[64];
@@ -36,19 +36,19 @@ typedef enum Protocol {
 typedef struct Client {
     Protocol protocol;
     SOCKET socket;
-	WsFrame wsFrame;	// 仅在升级协议后使用
+    WsFrame wsFrame;    // 仅在升级协议后使用
 } Client;
 
 #define MAX_CLIENT_NUM FD_SETSIZE
 typedef struct ClientSockets {
-	int    total;
+    int    total;
     Client clients[MAX_CLIENT_NUM];
 } ClientSockets;
 
 
 void log(const char* type, const char* format, ...) {
-	
-	// 获取当前时间
+    
+    // 获取当前时间
     time_t timer;
     char datetime[26];
     struct tm* tm_info;
@@ -57,37 +57,37 @@ void log(const char* type, const char* format, ...) {
     tm_info = localtime(&timer);
     strftime(datetime, 26, "%Y-%m-%d %H:%M:%S", tm_info);
 
-	// 获取日志内容
-	char content[512];
-	va_list arg;
+    // 获取日志内容
+    char content[512];
+    va_list arg;
 
-	va_start(arg, format);
-	vsnprintf(content, sizeof(content) - 1, format, arg);
-	va_end(arg);
+    va_start(arg, format);
+    vsnprintf(content, sizeof(content) - 1, format, arg);
+    va_end(arg);
 
-	// 拼接
-	char line[640];
-	int len = sprintf(line, "%s | %-20s | %s\r\n", datetime, type, content);
+    // 拼接
+    char line[640];
+    int len = sprintf(line, "%s | %-20s | %s\r\n", datetime, type, content);
 
-	FILE *fp;
-	char path[1048];
+    FILE *fp;
+    char path[1048];
 
-	sprintf(path, "%s%s", pluginPath, "log.txt");
+    sprintf(path, "%s%s", pluginPath, "log.txt");
 
-	if((fp = fopen(path, "a+")) == NULL) {
-		return;
-	}
+    if((fp = fopen(path, "a+")) == NULL) {
+        return;
+    }
 
-	fwrite(line, len, 1, fp);
+    fwrite(line, len, 1, fp);
 
-	fclose(fp);
+    fclose(fp);
 }
 
 // 返回转换后数据地址，记得free
 char* GBKToUTF8(const char* str) {
     
-	// GB18030代码页
-	#define CODE_PAGE 54936
+    // GB18030代码页
+    #define CODE_PAGE 54936
 
     int n = MultiByteToWideChar(CODE_PAGE, 0, str, -1, NULL, 0);
     wchar_t u16str[n + 1];
@@ -103,8 +103,8 @@ char* GBKToUTF8(const char* str) {
 // 返回转换后数据地址，记得free
 char* UTF8ToGBK(const char* str) {
 
-	// GB18030代码页
-	#define CODE_PAGE 54936
+    // GB18030代码页
+    #define CODE_PAGE 54936
 
     int n = MultiByteToWideChar(CP_UTF8, 0, str, -1, NULL, 0);
     wchar_t* u16str[n + 1];
@@ -114,20 +114,20 @@ char* UTF8ToGBK(const char* str) {
     char* gbstr = malloc(n + 1);
     WideCharToMultiByte(CODE_PAGE,0, u16str, -1, gbstr, n, NULL, NULL);
 
-	return gbstr;
+    return gbstr;
 }
 
 int socketSend(SOCKET socket, const char* buff, int len) {
 
-	int iSendResult = send(socket, buff, len, 0);
+    int iSendResult = send(socket, buff, len, 0);
 
-	if(iSendResult == SOCKET_ERROR) {
-		log("socketSend", "Send failed: %d", WSAGetLastError());
-		return iSendResult;
-	}
-	
-	log("socketSend", "Bytes sent: %d", iSendResult);
-	return iSendResult;
+    if(iSendResult == SOCKET_ERROR) {
+        log("socketSend", "Send failed: %d", WSAGetLastError());
+        return iSendResult;
+    }
+    
+    log("socketSend", "Bytes sent: %d", iSendResult);
+    return iSendResult;
 }
 
 int getSecWebSocketAcceptKey(const char* key, char* b64buff, int len) {
@@ -157,557 +157,557 @@ int getSecWebSocketAcceptKey(const char* key, char* b64buff, int len) {
 // 成功时该函数会通过initWsFrameStruct初始化client的wsFrame
 int wsShakeHands(const char* recvBuff, int recvLen, Client* client) {
 
-	#define HTTP_MAXLEN 1536
-	#define HTTP_400 "HTTP/1.1 400 Bad Request\r\n\r\n"
+    #define HTTP_MAXLEN 1536
+    #define HTTP_400 "HTTP/1.1 400 Bad Request\r\n\r\n"
 
-	// HTTP握手包太长，掐了
-	if(recvLen > HTTP_MAXLEN) {
-		socketSend(client->socket, HTTP_400, strlen(HTTP_400));
-		log("wsShakeHands", "Request too long");
-		return -1;
-	}
+    // HTTP握手包太长，掐了
+    if(recvLen > HTTP_MAXLEN) {
+        socketSend(client->socket, HTTP_400, strlen(HTTP_400));
+        log("wsShakeHands", "Request too long");
+        return -1;
+    }
 
-	// 找不到HTTP头结尾
-	if(!strstr(recvBuff, "\r\n\r\n")) {
-		log("wsShakeHands", "Incomplete HTTP header");
-		return -1;
-	}
+    // 找不到HTTP头结尾
+    if(!strstr(recvBuff, "\r\n\r\n")) {
+        log("wsShakeHands", "Incomplete HTTP header");
+        return -1;
+    }
 
-	const char *keyPos, *keyPosEnd;
+    const char *keyPos, *keyPosEnd;
 
-	if(
-		!strcmp(recvBuff, "GET / HTTP/1.1\r\n")        ||
-		!strstr(recvBuff, "Connection: ")		       ||
-		!strstr(recvBuff, "Upgrade: websocket")        ||
-		!strstr(recvBuff, "Sec-WebSocket-Version: 13") ||
-		!(keyPos = strstr(recvBuff, "Sec-WebSocket-Key: "))
-	) {
-		socketSend(client->socket, HTTP_400, strlen(HTTP_400));
-		log("wsShakeHands", "Missing required fields");
-		return -1;
-	}
+    if(
+        !strcmp(recvBuff, "GET / HTTP/1.1\r\n")        ||
+        !strstr(recvBuff, "Connection: ")               ||
+        !strstr(recvBuff, "Upgrade: websocket")        ||
+        !strstr(recvBuff, "Sec-WebSocket-Version: 13") ||
+        !(keyPos = strstr(recvBuff, "Sec-WebSocket-Key: "))
+    ) {
+        socketSend(client->socket, HTTP_400, strlen(HTTP_400));
+        log("wsShakeHands", "Missing required fields");
+        return -1;
+    }
 
-	keyPos = strstr(keyPos, ": ");
-	keyPos += 2;
+    keyPos = strstr(keyPos, ": ");
+    keyPos += 2;
 
-	if((keyPosEnd = strstr(keyPos, "\r\n")) == NULL) {
-		log("wsShakeHands", "Can't find keyPosEnd");
-		return -1;
-	}
+    if((keyPosEnd = strstr(keyPos, "\r\n")) == NULL) {
+        log("wsShakeHands", "Can't find keyPosEnd");
+        return -1;
+    }
 
-	char keyBuff[128], acptBuff[128];
+    char keyBuff[128], acptBuff[128];
 
-	// 获取Sec-WebSocket-Key
-	sprintf(keyBuff, "%.*s", keyPosEnd - keyPos, keyPos);
+    // 获取Sec-WebSocket-Key
+    sprintf(keyBuff, "%.*s", keyPosEnd - keyPos, keyPos);
 
-	log("wsShakeHands", "Sec-WebSocket-Key is %s", keyBuff);
+    log("wsShakeHands", "Sec-WebSocket-Key is %s", keyBuff);
 
-	// 获取Sec-WebSocket-Accept
-	getSecWebSocketAcceptKey(keyBuff, acptBuff, sizeof(acptBuff));
+    // 获取Sec-WebSocket-Accept
+    getSecWebSocketAcceptKey(keyBuff, acptBuff, sizeof(acptBuff));
 
-	log("wsShakeHands", "Sec-WebSocket-Accept is %s", acptBuff);
-	
+    log("wsShakeHands", "Sec-WebSocket-Accept is %s", acptBuff);
+    
 
-	// 协议升级
+    // 协议升级
 
-	char resBuff[256];
+    char resBuff[256];
 
-	// 注：当前的CORS设置可能会导致安全问题
-	// 注：响应中没有包含Sec-Websocket-Protocol头，代表不接受任何客户端请求的ws扩展
-	const char resHeader[] = 
-		"HTTP/1.1 101 ojbk\r\n"
-		"Connection: Upgrade\r\n"
-		"Upgrade: websocket\r\n"
-		"Sec-WebSocket-Accept: %s\r\n"
-		"Access-Control-Allow-Origin: *\r\n"
-		"\r\n"
-	;
-	
-	int resLen = sprintf(resBuff, resHeader, acptBuff);
+    // 注：当前的CORS设置可能会导致安全问题
+    // 注：响应中没有包含Sec-Websocket-Protocol头，代表不接受任何客户端请求的ws扩展
+    const char resHeader[] = 
+        "HTTP/1.1 101 ojbk\r\n"
+        "Connection: Upgrade\r\n"
+        "Upgrade: websocket\r\n"
+        "Sec-WebSocket-Accept: %s\r\n"
+        "Access-Control-Allow-Origin: *\r\n"
+        "\r\n"
+    ;
+    
+    int resLen = sprintf(resBuff, resHeader, acptBuff);
 
-	// Send data to the client
-	int iSendResult = socketSend(client->socket, resBuff, resLen);
+    // Send data to the client
+    int iSendResult = socketSend(client->socket, resBuff, resLen);
 
-	client->protocol = websocketProtocol;
-	initWsFrameStruct(&client->wsFrame);		// 初始化ws帧结构
-	
-	if(iSendResult == SOCKET_ERROR) {
-		return -1;
-	}
-	
-	log("wsShakeHands", "Bytes sent: %d", iSendResult);
-	log("wsShakeHands", "WebSocket handshake succeeded");
+    client->protocol = websocketProtocol;
+    initWsFrameStruct(&client->wsFrame);        // 初始化ws帧结构
+    
+    if(iSendResult == SOCKET_ERROR) {
+        return -1;
+    }
+    
+    log("wsShakeHands", "Bytes sent: %d", iSendResult);
+    log("wsShakeHands", "WebSocket handshake succeeded");
 
-	return 0;
+    return 0;
 }
 
 void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, Client* client) {
-	
-	// 注意，payload的文本数据不是以\0结尾
-	log("wsClientDataHandle","Payload data is %.*s", payloadLen > 128 ? 128 : (unsigned int)payloadLen, payload);
+    
+    // 注意，payload的文本数据不是以\0结尾
+    log("wsClientDataHandle","Payload data is %.*s", payloadLen > 128 ? 128 : (unsigned int)payloadLen, payload);
 
-	char* parseEnd;
+    char* parseEnd;
 
-	cJSON *json = cJSON_ParseWithOpts(payload, &parseEnd, 0);
+    cJSON *json = cJSON_ParseWithOpts(payload, &parseEnd, 0);
 
-	if(json == NULL) {
-		const char *error_ptr = cJSON_GetErrorPtr();
-		if (error_ptr != NULL) {
-			log("jsonParse", "Error before: %d", error_ptr - payload);
-		}
-		return;
-	}
+    if(json == NULL) {
+        const char *error_ptr = cJSON_GetErrorPtr();
+        if (error_ptr != NULL) {
+            log("jsonParse", "Error before: %d", error_ptr - payload);
+        }
+        return;
+    }
 
-	// 公有字段
-	const cJSON* j_id 	  = cJSON_GetObjectItemCaseSensitive(json, "id");		// cJSON_GetObjectItemCaseSensitive获取不存在的字段时会返回NULL
-	const cJSON* j_method = cJSON_GetObjectItemCaseSensitive(json, "method");
-	const cJSON* j_params = cJSON_GetObjectItemCaseSensitive(json, "params");
+    // 公有字段
+    const cJSON* j_id     = cJSON_GetObjectItemCaseSensitive(json, "id");        // cJSON_GetObjectItemCaseSensitive获取不存在的字段时会返回NULL
+    const cJSON* j_method = cJSON_GetObjectItemCaseSensitive(json, "method");
+    const cJSON* j_params = cJSON_GetObjectItemCaseSensitive(json, "params");
 
-	const cJSON_bool e_id 	  = cJSON_IsString(j_id);		// 如果j_xx的值为NULL的时候也会返回FALSE，所以e_xx为TRUE时可以保证字段存在且类型正确
-	const cJSON_bool e_method = cJSON_IsString(j_method);
-	const cJSON_bool e_params = cJSON_IsString(j_params);
+    const cJSON_bool e_id     = cJSON_IsString(j_id);        // 如果j_xx的值为NULL的时候也会返回FALSE，所以e_xx为TRUE时可以保证字段存在且类型正确
+    const cJSON_bool e_method = cJSON_IsString(j_method);
+    const cJSON_bool e_params = cJSON_IsString(j_params);
 
-	const char* v_id 	 = e_id 	? j_id->valuestring		: NULL;
-	const char* v_method = e_method ? j_method->valuestring	: NULL;
-	const char* v_params = e_params ? j_params->valuestring	: NULL;
+    const char* v_id     = e_id     ?  j_id->valuestring      : NULL;
+    const char* v_method = e_method ?  j_method->valuestring  : NULL;
+    const char* v_params = e_params ?  j_params->valuestring  : NULL;
 
-	if(!e_method) {
-		cJSON_Delete(json);
-		return;
-	}
+    if(!e_method) {
+        cJSON_Delete(json);
+        return;
+    }
 
-	// 参数字段
-	const cJSON* j_type 	= cJSON_GetObjectItemCaseSensitive(j_params, "type");		// 即使j_params为NULL也是安全的，返回的结果也是NULL
-	const cJSON* j_group 	= cJSON_GetObjectItemCaseSensitive(j_params, "group");
-	const cJSON* j_qq 		= cJSON_GetObjectItemCaseSensitive(j_params, "qq");
-	const cJSON* j_content 	= cJSON_GetObjectItemCaseSensitive(j_params, "content");
-	const cJSON* j_msgid 	= cJSON_GetObjectItemCaseSensitive(j_params, "msgid");
-	const cJSON* j_message  = cJSON_GetObjectItemCaseSensitive(j_params, "message");
-	const cJSON* j_object 	= cJSON_GetObjectItemCaseSensitive(j_params, "object");
-	const cJSON* j_data 	= cJSON_GetObjectItemCaseSensitive(j_params, "data");
+    // 参数字段
+    const cJSON* j_type    = cJSON_GetObjectItemCaseSensitive(j_params, "type");        // 即使j_params为NULL也是安全的，返回的结果也是NULL
+    const cJSON* j_group   = cJSON_GetObjectItemCaseSensitive(j_params, "group");
+    const cJSON* j_qq      = cJSON_GetObjectItemCaseSensitive(j_params, "qq");
+    const cJSON* j_content = cJSON_GetObjectItemCaseSensitive(j_params, "content");
+    const cJSON* j_msgid   = cJSON_GetObjectItemCaseSensitive(j_params, "msgid");
+    const cJSON* j_message = cJSON_GetObjectItemCaseSensitive(j_params, "message");
+    const cJSON* j_object  = cJSON_GetObjectItemCaseSensitive(j_params, "object");
+    const cJSON* j_data    = cJSON_GetObjectItemCaseSensitive(j_params, "data");
 
-	const cJSON_bool e_type 	= cJSON_IsNumber(j_type);
-	const cJSON_bool e_group 	= cJSON_IsString(j_group);
-	const cJSON_bool e_qq 		= cJSON_IsString(j_qq);
-	const cJSON_bool e_content 	= cJSON_IsString(j_content);
-	const cJSON_bool e_msgid 	= cJSON_IsString(j_msgid);
-	const cJSON_bool e_message  = cJSON_IsString(j_message);
-	const cJSON_bool e_object 	= cJSON_IsString(j_object);
-	const cJSON_bool e_data 	= cJSON_IsString(j_data);
+    const cJSON_bool e_type    = cJSON_IsNumber(j_type);
+    const cJSON_bool e_group   = cJSON_IsString(j_group);
+    const cJSON_bool e_qq      = cJSON_IsString(j_qq);
+    const cJSON_bool e_content = cJSON_IsString(j_content);
+    const cJSON_bool e_msgid   = cJSON_IsString(j_msgid);
+    const cJSON_bool e_message = cJSON_IsString(j_message);
+    const cJSON_bool e_object  = cJSON_IsString(j_object);
+    const cJSON_bool e_data    = cJSON_IsString(j_data);
 
-	const int*  v_type 		= e_type 	? j_type->valueint 		 : NULL;
-	const char* v_group 	= e_group 	? j_group->valuestring 	 : NULL;
-	const char* v_qq 		= e_qq 		? j_qq->valuestring 	 : NULL;
-	const char* v_content 	= e_content ? j_content->valuestring : NULL;
-	const char* v_msgid 	= e_msgid 	? j_msgid->valuestring 	 : NULL;
-	const char* v_message  	= e_message ? j_message->valuestring : NULL;
-	const char* v_object 	= e_object 	? j_object->valuestring  : NULL;
-	const char* v_data 		= e_data 	? j_data->valuestring 	 : NULL;
+    const int*  v_type    = e_type    ?  j_type->valueint        :  NULL;
+    const char* v_group   = e_group   ?  j_group->valuestring    :  NULL;
+    const char* v_qq      = e_qq      ?  j_qq->valuestring       :  NULL;
+    const char* v_content = e_content ?  j_content->valuestring  :  NULL;
+    const char* v_msgid   = e_msgid   ?  j_msgid->valuestring    :  NULL;
+    const char* v_message = e_message ?  j_message->valuestring  :  NULL;
+    const char* v_object  = e_object  ?  j_object->valuestring   :  NULL;
+    const char* v_data    = e_data    ?  j_data->valuestring     :  NULL;
+ 
+    log("jsonRPC", "Client call '%s' method", v_method);
 
-	log("jsonRPC", "Client call '%s' method", v_method);
+    #define PARAMS_CHECK(condition) if(!(condition)) {log("jsonParse", "Invalid data"); goto RPCParseEnd;}
+    #define METHOD_IS(name) (strcmp(name, v_method) == 0)
+    
+    if(METHOD_IS("sendMessage")) {
 
-	#define PARAMS_CHECK(condition) if(!(condition)) {log("jsonParse", "Invalid data"); goto RPCParseEnd;}
-	#define METHOD_IS(name) (strcmp(name, v_method) == 0)
-	
-	if(METHOD_IS("sendMessage")) {
+        PARAMS_CHECK(e_type && e_content && (e_qq || e_group));
 
-		PARAMS_CHECK(e_type && e_content && (e_qq || e_group));
+        char* gbkText = UTF8ToGBK(v_content);
+        QL_sendMessage(v_type, e_content ? v_group : "", e_qq ? v_qq : "", gbkText, authCode);
+        free(gbkText);
 
-		char* gbkText = UTF8ToGBK(v_content);
-		QL_sendMessage(v_type, e_content ? v_group : "", e_qq ? v_qq : "", gbkText, authCode);
-		free(gbkText);
+    } else if (METHOD_IS("withdrawMessage")) {
 
-	} else if (METHOD_IS("withdrawMessage")) {
+        PARAMS_CHECK(e_group && e_msgid);
 
-		PARAMS_CHECK(e_group && e_msgid);
+        QL_withdrawMessage(v_group, v_msgid, authCode);
 
-		QL_withdrawMessage(v_group, v_msgid, authCode);
+    } else if (METHOD_IS("getFriendList")) {
 
-	} else if (METHOD_IS("getFriendList")) {
+        PARAMS_CHECK(e_id);
 
-		PARAMS_CHECK(e_id);
+        cJSON* root = cJSON_CreateObject();
+        cJSON_AddItemToObject(root, "id", cJSON_CreateString(v_id));
 
-		cJSON* root = cJSON_CreateObject();
-		cJSON_AddItemToObject(root, "id", cJSON_CreateString(v_id));
+        const char* friendList = GBKToUTF8(QL_getFriendList(authCode));
+        cJSON_AddItemToObject(root, "result", cJSON_Parse(friendList));
 
-		const char* friendList = GBKToUTF8(QL_getFriendList(authCode));
-		cJSON_AddItemToObject(root, "result", cJSON_Parse(friendList));
+        int* newLen;
+        const char* jsonStr = cJSON_PrintUnformatted(root);
+        const char* frame = convertToWebSocketFrame(jsonStr, frameType_text, strlen(jsonStr), &newLen);
+        socketSend(client->socket, frame, newLen);
 
-		int* newLen;
-		const char* jsonStr = cJSON_PrintUnformatted(root);
-		const char* frame = convertToWebSocketFrame(jsonStr, frameType_text, strlen(jsonStr), &newLen);
-		socketSend(client->socket, frame, newLen);
+        cJSON_Delete(root);
+        free(friendList);
+        free(jsonStr);
+        free(frame);
 
-		cJSON_Delete(root);
-		free(friendList);
-		free(jsonStr);
-		free(frame);
+    } else if (METHOD_IS("addFriend")) {
 
-	} else if (METHOD_IS("addFriend")) {
+        PARAMS_CHECK(e_id);
 
-		PARAMS_CHECK(e_id);
+        if(!e_message) {
+            QL_addFriend(v_qq, "", authCode);
+        } else {
+            const char* text = UTF8ToGBK(v_message);
+            QL_addFriend(v_qq, text, authCode);
+            free(text);
+        }
 
-		if(!e_message) {
-			QL_addFriend(v_qq, "", authCode);
-		} else {
-			const char* text = UTF8ToGBK(v_message);
-			QL_addFriend(v_qq, text, authCode);
-			free(text);
-		}
+    } else if (METHOD_IS("deleteFriend")) {
 
-	} else if (METHOD_IS("deleteFriend")) {
+        PARAMS_CHECK(e_id);
 
-		PARAMS_CHECK(e_id);
+        QL_deleteFriend(v_qq, authCode);
 
-		QL_deleteFriend(v_qq, authCode);
+    } else if (METHOD_IS("getGroupList")) {
 
-	} else if (METHOD_IS("getGroupList")) {
+        PARAMS_CHECK(e_id);
 
-		PARAMS_CHECK(e_id);
+        cJSON* root = cJSON_CreateObject();
+        cJSON_AddItemToObject(root, "id", cJSON_CreateString(v_id));
 
-		cJSON* root = cJSON_CreateObject();
-		cJSON_AddItemToObject(root, "id", cJSON_CreateString(v_id));
+        const char* groupList = GBKToUTF8(QL_getGroupList(authCode));
+        cJSON_AddItemToObject(root, "result", cJSON_Parse(groupList));
 
-		const char* groupList = GBKToUTF8(QL_getGroupList(authCode));
-		cJSON_AddItemToObject(root, "result", cJSON_Parse(groupList));
+        int* newLen;
+        const char* jsonStr = cJSON_PrintUnformatted(root);
+        const char* frame = convertToWebSocketFrame(jsonStr, frameType_text, strlen(jsonStr), &newLen);
+        socketSend(client->socket, frame, newLen);
 
-		int* newLen;
-		const char* jsonStr = cJSON_PrintUnformatted(root);
-		const char* frame = convertToWebSocketFrame(jsonStr, frameType_text, strlen(jsonStr), &newLen);
-		socketSend(client->socket, frame, newLen);
+        cJSON_Delete(root);
+        free(groupList);
+        free(jsonStr);
+        free(frame);
 
-		cJSON_Delete(root);
-		free(groupList);
-		free(jsonStr);
-		free(frame);
+    } else if (METHOD_IS("getGroupMemberList")) {
 
-	} else if (METHOD_IS("getGroupMemberList")) {
+        PARAMS_CHECK(e_id && e_group);
 
-		PARAMS_CHECK(e_id && e_group);
+        cJSON* root = cJSON_CreateObject();
+        cJSON_AddItemToObject(root, "id", cJSON_CreateString(v_id));
 
-		cJSON* root = cJSON_CreateObject();
-		cJSON_AddItemToObject(root, "id", cJSON_CreateString(v_id));
+        const char* groupMemberList = GBKToUTF8(QL_getGroupMemberList(v_group, authCode));
+        cJSON_AddItemToObject(root, "result", cJSON_Parse(groupMemberList));
 
-		const char* groupMemberList = GBKToUTF8(QL_getGroupMemberList(v_group, authCode));
-		cJSON_AddItemToObject(root, "result", cJSON_Parse(groupMemberList));
+        int* newLen;
+        const char* jsonStr = cJSON_PrintUnformatted(root);
+        const char* frame = convertToWebSocketFrame(jsonStr, frameType_text, strlen(jsonStr), &newLen);
+        socketSend(client->socket, frame, newLen);
 
-		int* newLen;
-		const char* jsonStr = cJSON_PrintUnformatted(root);
-		const char* frame = convertToWebSocketFrame(jsonStr, frameType_text, strlen(jsonStr), &newLen);
-		socketSend(client->socket, frame, newLen);
+        cJSON_Delete(root);
+        free(groupMemberList);
+        free(jsonStr);
+        free(frame);
 
-		cJSON_Delete(root);
-		free(groupMemberList);
-		free(jsonStr);
-		free(frame);
+    } else if (METHOD_IS("addGroup")) {
 
-	} else if (METHOD_IS("addGroup")) {
+        PARAMS_CHECK(e_group);
 
-		PARAMS_CHECK(e_group);
+        if(!e_message) {
+            QL_addGroup(v_group, "", authCode);
+        } else {
+            const char* text = UTF8ToGBK(v_message);
+            QL_addGroup(v_group, text, authCode);
+            free(text);
+        }
 
-		if(!e_message) {
-			QL_addGroup(v_group, "", authCode);
-		} else {
-			const char* text = UTF8ToGBK(v_message);
-			QL_addGroup(v_group, text, authCode);
-			free(text);
-		}
+    } else if (METHOD_IS("quitGroup")) {
 
-	} else if (METHOD_IS("quitGroup")) {
+        PARAMS_CHECK(e_group);
 
-		PARAMS_CHECK(e_group);
+        QL_quitGroup(v_group, authCode);
 
-		QL_quitGroup(v_group, authCode);
+    } else if (METHOD_IS("getGroupCard")) {
 
-	} else if (METHOD_IS("getGroupCard")) {
+        PARAMS_CHECK(e_id && e_group && e_qq);
 
-		PARAMS_CHECK(e_id && e_group && e_qq);
+        cJSON* root = cJSON_CreateObject();
+        cJSON_AddItemToObject(root, "id", cJSON_CreateString(v_id));
 
-		cJSON* root = cJSON_CreateObject();
-		cJSON_AddItemToObject(root, "id", cJSON_CreateString(v_id));
+        const char* groupCard = GBKToUTF8(QL_getGroupCard(v_group, v_qq, authCode));
+        cJSON_AddItemToObject(root, "result", cJSON_CreateString(groupCard));
 
-		const char* groupCard = GBKToUTF8(QL_getGroupCard(v_group, v_qq, authCode));
-		cJSON_AddItemToObject(root, "result", cJSON_CreateString(groupCard));
+        int* newLen;
+        const char* jsonStr = cJSON_PrintUnformatted(root);
+        const char* frame = convertToWebSocketFrame(jsonStr, frameType_text, strlen(jsonStr), &newLen);
+        socketSend(client->socket, frame, newLen);
 
-		int* newLen;
-		const char* jsonStr = cJSON_PrintUnformatted(root);
-		const char* frame = convertToWebSocketFrame(jsonStr, frameType_text, strlen(jsonStr), &newLen);
-		socketSend(client->socket, frame, newLen);
+        cJSON_Delete(root);
+        free(groupCard);
+        free(jsonStr);
+        free(frame);
 
-		cJSON_Delete(root);
-		free(groupCard);
-		free(jsonStr);
-		free(frame);
+    } else if (METHOD_IS("uploadImage")) {
 
-	} else if (METHOD_IS("uploadImage")) {
+        PARAMS_CHECK(e_id && e_type && e_object && e_data);
 
-		PARAMS_CHECK(e_id && e_type && e_object && e_data);
+        cJSON* root = cJSON_CreateObject();
+        cJSON_AddItemToObject(root, "id", cJSON_CreateString(v_id));
 
-		cJSON* root = cJSON_CreateObject();
-		cJSON_AddItemToObject(root, "id", cJSON_CreateString(v_id));
+        const char* guid = QL_uploadImage(v_type, v_object, v_data, authCode);
+        cJSON_AddItemToObject(root, "result", cJSON_CreateString(guid));
 
-		const char* guid = QL_uploadImage(v_type, v_object, v_data, authCode);
-		cJSON_AddItemToObject(root, "result", cJSON_CreateString(guid));
+        int* newLen;
+        const char* jsonStr = cJSON_PrintUnformatted(root);
+        const char* frame = convertToWebSocketFrame(jsonStr, frameType_text, strlen(jsonStr), &newLen);
+        socketSend(client->socket, frame, newLen);
 
-		int* newLen;
-		const char* jsonStr = cJSON_PrintUnformatted(root);
-		const char* frame = convertToWebSocketFrame(jsonStr, frameType_text, strlen(jsonStr), &newLen);
-		socketSend(client->socket, frame, newLen);
+        cJSON_Delete(root);
+        free(jsonStr);
+        free(frame);
 
-		cJSON_Delete(root);
-		free(jsonStr);
-		free(frame);
+    } else {
+        log("jsonRPC", "Unknown method '%s'", v_method);
+    }
 
-	} else {
-		log("jsonRPC", "Unknown method '%s'", v_method);
-	}
+    RPCParseEnd:
 
-	RPCParseEnd:
-
-	cJSON_Delete(json);
+    cJSON_Delete(json);
 }
 
 // 处理WebSocket帧数据，返回-1代表需要关闭连接
 int wsClientDataHandle(const char* recvBuff, int recvLen, Client* client) {
 
-	WsFrame* wsFrame = &client->wsFrame;
+    WsFrame* wsFrame = &client->wsFrame;
 
-	if(recvLen == 0) {
-		return 0;
-	}
+    if(recvLen == 0) {
+        return 0;
+    }
 
-	int consume = readWebSocketFrameStream(wsFrame, recvBuff, recvLen);
+    int consume = readWebSocketFrameStream(wsFrame, recvBuff, recvLen);
 
-	log("wsClientDataHandle", "Consume %d bytes of data in %d bytes", consume, recvLen);
-	log("wsClientDataHandle", "wsFrame->state is %d", wsFrame->state);
+    log("wsClientDataHandle", "Consume %d bytes of data in %d bytes", consume, recvLen);
+    log("wsClientDataHandle", "wsFrame->state is %d", wsFrame->state);
 
-	if(wsFrame->state == frameState_success) {
+    if(wsFrame->state == frameState_success) {
 
-		log("wsClientDataHandle", "Header and payload lengths are %llu and %llu", wsFrame->headerLen, wsFrame->payloadLen);
+        log("wsClientDataHandle", "Header and payload lengths are %llu and %llu", wsFrame->headerLen, wsFrame->payloadLen);
 
-		// 暂时不处理多帧数据，遇到多帧数据关闭连接
-		if(wsFrame->FIN == 0) {
-			log("wsClientDataHandle", "This is not the final fragment in a message");
-			return -1;
-		}
+        // 暂时不处理多帧数据，遇到多帧数据关闭连接
+        if(wsFrame->FIN == 0) {
+            log("wsClientDataHandle", "This is not the final fragment in a message");
+            return -1;
+        }
 
-		// 客户端希望关闭连接
-		if(wsFrame->frameType == frameType_connectionClose) {
-			log("wsClientDataHandle", "Connection close frame");
-			return -1;
-		}
+        // 客户端希望关闭连接
+        if(wsFrame->frameType == frameType_connectionClose) {
+            log("wsClientDataHandle", "Connection close frame");
+            return -1;
+        }
 
-		// 遇到意料之外的帧类型
-		if( wsFrame->frameType == frameType_binary 		||
-			wsFrame->frameType == frameType_pong		||
-			wsFrame->frameType == frameType_continuation
-		) {
-			log("wsClientDataHandle", "Unexpected frame type");
-			return -1;
-		}
+        // 遇到意料之外的帧类型
+        if( wsFrame->frameType == frameType_binary         ||
+            wsFrame->frameType == frameType_pong        ||
+            wsFrame->frameType == frameType_continuation
+        ) {
+            log("wsClientDataHandle", "Unexpected frame type");
+            return -1;
+        }
 
-		uint64_t payloadLen = wsFrame->payloadLen;
-		u_char* payload = wsFrame->buff + wsFrame->headerLen;
+        uint64_t payloadLen = wsFrame->payloadLen;
+        u_char* payload = wsFrame->buff + wsFrame->headerLen;
 
-		// 解码载荷
-		for(uint64_t j = 0; j < payloadLen; j++) {
-			payload[j] = payload[j] ^ wsFrame->mask[j % 4];
-		}
+        // 解码载荷
+        for(uint64_t j = 0; j < payloadLen; j++) {
+            payload[j] = payload[j] ^ wsFrame->mask[j % 4];
+        }
 
-		int iSendResult;
+        int iSendResult;
 
-		// 心跳
-		if(wsFrame->frameType == frameType_ping) {
-			int newLen;
-			const char* frame = convertToWebSocketFrame(payload, frameType_pong, payloadLen, &newLen);
-			log("wsClientDataHandle", "pong");
-			socketSend(client->socket, frame, newLen);
-			free(frame);
-		}
+        // 心跳
+        if(wsFrame->frameType == frameType_ping) {
+            int newLen;
+            const char* frame = convertToWebSocketFrame(payload, frameType_pong, payloadLen, &newLen);
+            log("wsClientDataHandle", "pong");
+            socketSend(client->socket, frame, newLen);
+            free(frame);
+        }
 
-		// 处理文本数据
-		if(wsFrame->frameType == frameType_text) {
-			wsClientTextDataHandle(payload, payloadLen, client);
-		}
+        // 处理文本数据
+        if(wsFrame->frameType == frameType_text) {
+            wsClientTextDataHandle(payload, payloadLen, client);
+        }
 
-	}
+    }
 
-	// 一个帧接收完成并处理完毕后释放内存
-	if(wsFrame->state == frameState_success) {
-		freeWebSocketFrame(wsFrame);
-	}
+    // 一个帧接收完成并处理完毕后释放内存
+    if(wsFrame->state == frameState_success) {
+        freeWebSocketFrame(wsFrame);
+    }
 
-	// 解析ws帧出错，释放内存并通知关闭连接
-	if (wsFrame->state == frameState_failure) {
-		freeWebSocketFrame(wsFrame);
-		return -1;
-	}
+    // 解析ws帧出错，释放内存并通知关闭连接
+    if (wsFrame->state == frameState_failure) {
+        freeWebSocketFrame(wsFrame);
+        return -1;
+    }
 
-	// 传入的数据不止包含当前帧，包含下一帧的数据
-	if(consume != recvLen) {
-		return wsClientDataHandle(recvBuff + consume, recvLen - consume, wsFrame);
-	}
+    // 传入的数据不止包含当前帧，包含下一帧的数据
+    if(consume != recvLen) {
+        return wsClientDataHandle(recvBuff + consume, recvLen - consume, wsFrame);
+    }
 
-	return 0;
+    return 0;
 }
 
 void receiveComingData(ClientSockets* clientSockets) {
 
-	#define RECV_BUFLEN 40960
+    #define RECV_BUFLEN 40960
 
-	unsigned char recvbuf[RECV_BUFLEN];
-	int iResult;
+    unsigned char recvbuf[RECV_BUFLEN];
+    int iResult;
 
-	int ret; 
+    int ret; 
     fd_set fdread; 
     struct timeval tv = {1, 0}; 
  
-	receivingDataLoop:
-		
-	FD_ZERO(&fdread); 
-	for(int i = 0; i < clientSockets->total; i++) {     
-		FD_SET(clientSockets->clients[i].socket, &fdread);   
-	}
-	
-	ret = select(0, &fdread, NULL, NULL, &tv);
-	
-	if(ret == 0) {
-		goto receivingDataLoop;     // select的等待时间到达，开始下一轮等待 
-	}
-	
-	// 当客户端数为0时select的等待时间设置将不会生效，立即返回WSAEINVAL错误
-	// 所以客户端数为0时会产生无停顿的循环，占满CPU，这里通过Sleep放弃时间片占用 
-	if(ret == SOCKET_ERROR && WSAGetLastError() == WSAEINVAL) {
-		Sleep(1); 
-	}
-	
-	for(int i = 0; i < clientSockets->total; i++) {
-		
-		const SOCKET clientSocket = clientSockets->clients[i].socket;
-		
-		if(FD_ISSET(clientSocket, &fdread)) {
-			
-			iResult = recv(clientSocket, recvbuf, RECV_BUFLEN, 0);  
+    receivingDataLoop:
+        
+    FD_ZERO(&fdread); 
+    for(int i = 0; i < clientSockets->total; i++) {     
+        FD_SET(clientSockets->clients[i].socket, &fdread);   
+    }
+    
+    ret = select(0, &fdread, NULL, NULL, &tv);
+    
+    if(ret == 0) {
+        goto receivingDataLoop;     // select的等待时间到达，开始下一轮等待 
+    }
+    
+    // 当客户端数为0时select的等待时间设置将不会生效，立即返回WSAEINVAL错误
+    // 所以客户端数为0时会产生无停顿的循环，占满CPU，这里通过Sleep放弃时间片占用 
+    if(ret == SOCKET_ERROR && WSAGetLastError() == WSAEINVAL) {
+        Sleep(1); 
+    }
+    
+    for(int i = 0; i < clientSockets->total; i++) {
+        
+        const SOCKET clientSocket = clientSockets->clients[i].socket;
+        
+        if(FD_ISSET(clientSocket, &fdread)) {
+            
+            iResult = recv(clientSocket, recvbuf, RECV_BUFLEN, 0);  
 
-			if(iResult > 0) {
-				
-				log("receiveComingData", "Bytes received: %d", iResult);
-				
-				if(clientSockets->clients[i].protocol == websocketProtocol) {
-					int result = wsClientDataHandle(recvbuf, iResult, &clientSockets->clients[i]);
-					if(result == -1) goto removeClientSocket;
-				} else {
-					int result = wsShakeHands(recvbuf, iResult, &clientSockets->clients[i]);
-					if(result != 0) goto removeClientSocket;
-				}
+            if(iResult > 0) {
+                
+                log("receiveComingData", "Bytes received: %d", iResult);
+                
+                if(clientSockets->clients[i].protocol == websocketProtocol) {
+                    int result = wsClientDataHandle(recvbuf, iResult, &clientSockets->clients[i]);
+                    if(result == -1) goto removeClientSocket;
+                } else {
+                    int result = wsShakeHands(recvbuf, iResult, &clientSockets->clients[i]);
+                    if(result != 0) goto removeClientSocket;
+                }
 
-			} else {
-				
-				if(iResult == 0) {
-					// 客户端礼貌的关闭连接 
-					log("receiveComingData", "Connection closing...");
-				} else {
-					// 客户端异常关闭连接等情况
-					log("receiveComingData", "Recv failed: %d", WSAGetLastError());
-				}
-				
-				// 从数组中移除该socket并调用closesocket 
-				removeClientSocket:
-				
-				// 该socket不处于数组末尾 
-				if(i < clientSockets->total - 1) {
-					
-					clientSockets->clients[i] = 
-						clientSockets->clients[--clientSockets->total];  // 将数组末尾的socket填到当前位置 
-												
-					i--;		// 回退循环计数，从当前位置继续循环 
+            } else {
+                
+                if(iResult == 0) {
+                    // 客户端礼貌的关闭连接 
+                    log("receiveComingData", "Connection closing...");
+                } else {
+                    // 客户端异常关闭连接等情况
+                    log("receiveComingData", "Recv failed: %d", WSAGetLastError());
+                }
+                
+                // 从数组中移除该socket并调用closesocket 
+                removeClientSocket:
+                
+                // 该socket不处于数组末尾 
+                if(i < clientSockets->total - 1) {
+                    
+                    clientSockets->clients[i] = 
+                        clientSockets->clients[--clientSockets->total];  // 将数组末尾的socket填到当前位置 
+                                                
+                    i--;        // 回退循环计数，从当前位置继续循环 
 
-				} else {
-					clientSockets->total--;
-					i--;
-				}
-				
-				log("receiveComingData", "Now client sockets length: %d", clientSockets->total);
-				
-				struct linger so_linger;
-				so_linger.l_onoff = 1;
-				so_linger.l_linger = 1;
-				setsockopt(clientSocket, SOL_SOCKET, SO_LINGER, &so_linger, sizeof(so_linger));
-				closesocket(clientSocket);
-			}
-		}
-	}
+                } else {
+                    clientSockets->total--;
+                    i--;
+                }
+                
+                log("receiveComingData", "Now client sockets length: %d", clientSockets->total);
+                
+                struct linger so_linger;
+                so_linger.l_onoff = 1;
+                so_linger.l_linger = 1;
+                setsockopt(clientSocket, SOL_SOCKET, SO_LINGER, &so_linger, sizeof(so_linger));
+                closesocket(clientSocket);
+            }
+        }
+    }
 
-	goto receivingDataLoop;
+    goto receivingDataLoop;
 }
 
 SOCKET serverSocket;
 
 void receiveConnect(ClientSockets* clientSockets) {
-	
-	DWORD   dwThreadId;
-	SOCKET 	clientSocket;
+    
+    DWORD   dwThreadId;
+    SOCKET     clientSocket;
     
     HANDLE hHandle = CreateThread(NULL, 0, (void*)receiveComingData, clientSockets, 0, &dwThreadId);
-	
-	SOCKADDR_IN client; 
-	
-	receivingConnectLoop:
+    
+    SOCKADDR_IN client; 
+    
+    receivingConnectLoop:
 
-	// Accept a connection   
-	clientSocket = accept(serverSocket, (struct sockaddr *)&client, NULL);   
+    // Accept a connection   
+    clientSocket = accept(serverSocket, (struct sockaddr *)&client, NULL);   
 
-	// 当连接数达到上限时拒绝连接
-	if(clientSockets->total >= MAX_CLIENT_NUM) {
-		closesocket(clientSocket);
-		goto receivingConnectLoop;
-	}
-	
-	if(clientSocket == INVALID_SOCKET) {
-			
-		int errCode = WSAGetLastError();
-		
-		// serverSocket不是一个套接字，即serverSocket已经执行了closesocket 
-		if(errCode == WSAENOTSOCK) {
-			log("receiveConnect", "Threads will exit");
-			TerminateThread(hHandle, NULL);		// 粗暴的终止receiveComingData线程 
-			
-			log("receiveConnect", "Closing all client sockets...");
+    // 当连接数达到上限时拒绝连接
+    if(clientSockets->total >= MAX_CLIENT_NUM) {
+        closesocket(clientSocket);
+        goto receivingConnectLoop;
+    }
+    
+    if(clientSocket == INVALID_SOCKET) {
+            
+        int errCode = WSAGetLastError();
+        
+        // serverSocket不是一个套接字，即serverSocket已经执行了closesocket 
+        if(errCode == WSAENOTSOCK) {
+            log("receiveConnect", "Threads will exit");
+            TerminateThread(hHandle, NULL);        // 粗暴的终止receiveComingData线程 
+            
+            log("receiveConnect", "Closing all client sockets...");
 
-			// 关闭所有客户端连接 
-			for(int i = 0; i < clientSockets->total; i++) {
-				closesocket(clientSockets->clients[i].socket);   	
-			}
-			clientSockets->total = 0;
-			
-			ExitThread(NULL); 	// 退出 
-		}
-		
-		log("receiveConnect", "Accept failed: %d", WSAGetLastError());
-		goto receivingConnectLoop;
-	}
-	
-	log("receiveConnect", "Accepted client: %s:%d", inet_ntoa(client.sin_addr), ntohs(client.sin_port));
-	
-	// Add socket to fdTotal
-	clientSockets->clients[clientSockets->total].socket = clientSocket;
-	clientSockets->clients[clientSockets->total].protocol = socketProtocol;
-	clientSockets->total++;
+            // 关闭所有客户端连接 
+            for(int i = 0; i < clientSockets->total; i++) {
+                closesocket(clientSockets->clients[i].socket);       
+            }
+            clientSockets->total = 0;
+            
+            ExitThread(NULL);     // 退出 
+        }
+        
+        log("receiveConnect", "Accept failed: %d", WSAGetLastError());
+        goto receivingConnectLoop;
+    }
+    
+    log("receiveConnect", "Accepted client: %s:%d", inet_ntoa(client.sin_addr), ntohs(client.sin_port));
+    
+    // Add socket to fdTotal
+    clientSockets->clients[clientSockets->total].socket = clientSocket;
+    clientSockets->clients[clientSockets->total].protocol = socketProtocol;
+    clientSockets->total++;
 
-	goto receivingConnectLoop;
+    goto receivingConnectLoop;
 }
 
 ClientSockets clientSockets = {total: 0};
 
 int serverStart(void) {
 
-	#define SERVER_PORT 49632
+    #define SERVER_PORT 49632
     WSADATA wsaData;
     
     int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
     if(iResult != 0) {
-    	log("ServerStart", "WSAStartup failed");
-    	return -1;
+        log("ServerStart", "WSAStartup failed");
+        return -1;
     }
     
     struct sockaddr_in sockAddr;
@@ -720,11 +720,11 @@ int serverStart(void) {
     serverSocket = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
     
     if(serverSocket == INVALID_SOCKET) {
-		log("ServerStart", "Error at socket(): %d", WSAGetLastError());
-    	WSACleanup();
-    	return -1;
+        log("ServerStart", "Error at socket(): %d", WSAGetLastError());
+        WSACleanup();
+        return -1;
     }
-	
+    
     if(bind(serverSocket, (SOCKADDR*)&sockAddr, sizeof(SOCKADDR)) == SOCKET_ERROR) {
         log("ServerStart","Bind failed with error: %d", WSAGetLastError());
         closesocket(serverSocket);
@@ -733,107 +733,107 @@ int serverStart(void) {
     }
     
     if(listen(serverSocket, SOMAXCONN) == SOCKET_ERROR) {
-	    log("ServerStart", "Listen failed with error: %d", WSAGetLastError());
-	    closesocket(serverSocket);
-	    WSACleanup();
-	    return -1;
-	}
+        log("ServerStart", "Listen failed with error: %d", WSAGetLastError());
+        closesocket(serverSocket);
+        WSACleanup();
+        return -1;
+    }
     
-   	DWORD dwThreadId;
-	HANDLE hHandle = CreateThread(NULL, 0, (void*)receiveConnect, &clientSockets, 0, &dwThreadId);
-	
-	return 0;
+       DWORD dwThreadId;
+    HANDLE hHandle = CreateThread(NULL, 0, (void*)receiveConnect, &clientSockets, 0, &dwThreadId);
+    
+    return 0;
 }
 
 void serverStop(void) {
-	closesocket(serverSocket);
+    closesocket(serverSocket);
     WSACleanup();
 }
 
 DllExport(const char*) __stdcall Information(const char* _authCode) {
-	
-	// 获取authCode
-	strncpy(authCode, _authCode, sizeof(authCode) - 1);
-	
-	return PLUGIN_INFO;
+    
+    // 获取authCode
+    strncpy(authCode, _authCode, sizeof(authCode) - 1);
+    
+    return PLUGIN_INFO;
 }
 
 DllExport(int) Event_Initialization(void) {
-	
-	// 获取插件目录
-	strncpy(pluginPath, QL_getPluginPath(authCode), sizeof(authCode) - 1);
-	
-	return 0;
+    
+    // 获取插件目录
+    strncpy(pluginPath, QL_getPluginPath(authCode), sizeof(authCode) - 1);
+    
+    return 0;
 }
 
 DllExport(int) Event_pluginStart(void) {
-	
-	int result = serverStart();
-	
-	if(result != 0) {
-		log("Event_pluginStart", "WebSocket server startup failed");
-	} else {
-		log("Event_pluginStart", "WebSocket server startup success");
-	}
-	
-	return 0;
+    
+    int result = serverStart();
+    
+    if(result != 0) {
+        log("Event_pluginStart", "WebSocket server startup failed");
+    } else {
+        log("Event_pluginStart", "WebSocket server startup success");
+    }
+    
+    return 0;
 } 
 
 DllExport(int) Event_pluginStop(void) {
-	
-	serverStop();
-	
-	log("Event_pluginStop", "WebSocket server stopped"); 
-	
-	return 0;
+    
+    serverStop();
+    
+    log("Event_pluginStop", "WebSocket server stopped"); 
+    
+    return 0;
 }
 
 DllExport(int) Event_GetNewMsg (
-	int type,			// 1=好友消息 2=群消息 3=群临时消息 4=讨论组消息 5=讨论组临时消息 6=QQ临时消息
-	const char* group, 	// 类型为1或6的时候，此参数为空字符串，其余情况下为群号或讨论组号
-	const char* qq,		// 消息来源QQ号 "10000"都是来自系统的消息(比如某人被禁言或某人撤回消息等)
- 	const char* msg,	// 消息内容
-	const char* msgid	// 消息id，撤回消息的时候会用到，群消息会存在，其余情况下为空  
+    int type,            // 1=好友消息 2=群消息 3=群临时消息 4=讨论组消息 5=讨论组临时消息 6=QQ临时消息
+    const char* group,     // 类型为1或6的时候，此参数为空字符串，其余情况下为群号或讨论组号
+    const char* qq,        // 消息来源QQ号 "10000"都是来自系统的消息(比如某人被禁言或某人撤回消息等)
+     const char* msg,    // 消息内容
+    const char* msgid    // 消息id，撤回消息的时候会用到，群消息会存在，其余情况下为空  
 ) {
 
-	const char* u8Content = GBKToUTF8(msg);
+    const char* u8Content = GBKToUTF8(msg);
 
-	cJSON* root = cJSON_CreateObject();
-	cJSON_AddItemToObject(root, "event", cJSON_CreateString("message"));
+    cJSON* root = cJSON_CreateObject();
+    cJSON_AddItemToObject(root, "event", cJSON_CreateString("message"));
 
-	cJSON* params = cJSON_CreateObject();
-	cJSON_AddItemToObject(params, "type", cJSON_CreateNumber(type));
-	cJSON_AddItemToObject(params, "msgid", cJSON_CreateString(msgid));
-	cJSON_AddItemToObject(params, "group", cJSON_CreateString(group));
-	cJSON_AddItemToObject(params, "qq", cJSON_CreateString(qq));
-	cJSON_AddItemToObject(params, "content", cJSON_CreateString(u8Content));
+    cJSON* params = cJSON_CreateObject();
+    cJSON_AddItemToObject(params, "type", cJSON_CreateNumber(type));
+    cJSON_AddItemToObject(params, "msgid", cJSON_CreateString(msgid));
+    cJSON_AddItemToObject(params, "group", cJSON_CreateString(group));
+    cJSON_AddItemToObject(params, "qq", cJSON_CreateString(qq));
+    cJSON_AddItemToObject(params, "content", cJSON_CreateString(u8Content));
 
-	cJSON_AddItemToObject(root, "params", params);
+    cJSON_AddItemToObject(root, "params", params);
 
-	const char* jsonStr = cJSON_PrintUnformatted(root);
+    const char* jsonStr = cJSON_PrintUnformatted(root);
 
-	size_t len;
-	const char* frame = convertToWebSocketFrame(jsonStr, frameType_text, strlen(jsonStr), &len);
+    size_t len;
+    const char* frame = convertToWebSocketFrame(jsonStr, frameType_text, strlen(jsonStr), &len);
 
-	for(int i = 0; i < clientSockets.total; i++) {
-		socketSend(clientSockets.clients[i].socket, frame, len);
-	}
+    for(int i = 0; i < clientSockets.total; i++) {
+        socketSend(clientSockets.clients[i].socket, frame, len);
+    }
 
-	cJSON_Delete(root);
-	free(u8Content);
-	free(jsonStr);
-	free(frame);
+    cJSON_Delete(root);
+    free(u8Content);
+    free(jsonStr);
+    free(frame);
 
-	return 0;	// 返回0下个插件继续处理该事件，返回1拦截此事件不让其他插件执行
+    return 0;    // 返回0下个插件继续处理该事件，返回1拦截此事件不让其他插件执行
 }
 
 BOOL APIENTRY DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved) {
-	
-	if(loadQQLightAPI() != 0) {
-		MessageBox(NULL, "The message.dll load failed", "error", MB_OK);
-		return FALSE;
-	}
-	
-	/* Returns TRUE on success, FALSE on failure */
+    
+    if(loadQQLightAPI() != 0) {
+        MessageBox(NULL, "The message.dll load failed", "error", MB_OK);
+        return FALSE;
+    }
+    
+    /* Returns TRUE on success, FALSE on failure */
     return TRUE;
 }
