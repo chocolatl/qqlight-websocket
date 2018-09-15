@@ -1,6 +1,9 @@
 #include <stdbool.h>
 #include <windef.h>
 #include <stdlib.h>
+#include <winsock2.h>
+#include "lib/sha1/sha1.h"
+#include "lib/base64/b64.h"
 #include "ws.h"
 
 // 初始化帧结构
@@ -342,4 +345,111 @@ void freeWebSocketFrame(WsFrame* wsFrame) {
         free(wsFrame->buff);
     }
     initWsFrameStruct(wsFrame);
+}
+
+int getSecWebSocketAcceptKey(const char* key, char* b64buff, int len) {
+
+    SHA1_CTX ctx;
+    unsigned char hash[20], buff[512];
+
+    if(strlen(key) > 256) {
+        return -1;
+    }
+
+    sprintf(buff, "%s%s", key, "258EAFA5-E914-47DA-95CA-C5AB0DC85B11");
+
+    SHA1Init(&ctx);
+    SHA1Update(&ctx, buff, strlen(buff));
+    SHA1Final(hash, &ctx);
+
+    const char* base64 = b64_encode(hash, sizeof(hash));
+    strncpy(b64buff, base64, len - 1);
+    b64buff[len - 1] = '\0';
+    free((void*)base64);
+
+    return 0;
+}
+
+// 处理HTTP协议升级为WebSocket协议的握手请求，握手成功返回0，失败返回-1
+int wsShakeHands(const char* recvBuff, int recvLen, SOCKET socket) {
+
+    #define HTTP_MAXLEN 1536
+    #define HTTP_400 "HTTP/1.1 400 Bad Request\r\n\r\n"
+
+    // HTTP握手包太长，掐了
+    if(recvLen > HTTP_MAXLEN) {
+        send(socket, HTTP_400, strlen(HTTP_400), 0);
+        pluginLog("wsShakeHands", "Request too long");
+        return -1;
+    }
+
+    // 找不到HTTP头结尾
+    if(!strstr(recvBuff, "\r\n\r\n")) {
+        pluginLog("wsShakeHands", "Incomplete HTTP header");
+        return -1;
+    }
+
+    const char *keyPos, *keyPosEnd;
+
+    if(
+        !strcmp(recvBuff, "GET / HTTP/1.1\r\n")             ||
+        !strstr(recvBuff, "Connection: ")                   ||
+        !strstr(recvBuff, "Upgrade: websocket")             ||
+        !strstr(recvBuff, "Sec-WebSocket-Version: 13")      ||
+        !(keyPos = strstr(recvBuff, "Sec-WebSocket-Key: "))
+    ) {
+        send(socket, HTTP_400, strlen(HTTP_400), 0);
+        pluginLog("wsShakeHands", "Missing required fields");
+        return -1;
+    }
+
+    keyPos = strstr(keyPos, ": ");
+    keyPos += 2;
+
+    if((keyPosEnd = strstr(keyPos, "\r\n")) == NULL) {
+        pluginLog("wsShakeHands", "Can't find keyPosEnd");
+        return -1;
+    }
+
+    char keyBuff[128], acptBuff[128];
+
+    // 获取Sec-WebSocket-Key
+    sprintf(keyBuff, "%.*s", keyPosEnd - keyPos, keyPos);
+
+    pluginLog("wsShakeHands", "Sec-WebSocket-Key is %s", keyBuff);
+
+    // 获取Sec-WebSocket-Accept
+    getSecWebSocketAcceptKey(keyBuff, acptBuff, sizeof(acptBuff));
+
+    pluginLog("wsShakeHands", "Sec-WebSocket-Accept is %s", acptBuff);
+    
+
+    // 协议升级
+
+    char resBuff[256];
+
+    // 注：当前的CORS设置可能会导致安全问题
+    // 注：响应中没有包含Sec-Websocket-Protocol头，代表不接受任何客户端请求的ws扩展
+    const char resHeader[] = 
+        "HTTP/1.1 101 ojbk\r\n"
+        "Connection: Upgrade\r\n"
+        "Upgrade: websocket\r\n"
+        "Sec-WebSocket-Accept: %s\r\n"
+        "Access-Control-Allow-Origin: *\r\n"
+        "\r\n"
+    ;
+    
+    int resLen = sprintf(resBuff, resHeader, acptBuff);
+
+    // Send data to the client
+    int iSendResult = send(socket, resBuff, resLen, 0);
+    
+    if(iSendResult == SOCKET_ERROR) {
+        return -1;
+    }
+    
+    pluginLog("wsShakeHands", "Bytes sent: %d", iSendResult);
+    pluginLog("wsShakeHands", "WebSocket handshake succeeded");
+
+    return 0;
 }
