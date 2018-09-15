@@ -87,7 +87,7 @@ void pluginLog(const char* type, const char* format, ...) {
 char* GBKToUTF8(const char* str) {
     
     // GB18030代码页
-    #define CODE_PAGE 54936
+    const int CODE_PAGE = 54936;
 
     int n = MultiByteToWideChar(CODE_PAGE, 0, str, -1, NULL, 0);
     wchar_t u16str[n + 1];
@@ -104,7 +104,7 @@ char* GBKToUTF8(const char* str) {
 char* UTF8ToGBK(const char* str) {
 
     // GB18030代码页
-    #define CODE_PAGE 54936
+    const int CODE_PAGE = 54936;
 
     int n = MultiByteToWideChar(CP_UTF8, 0, str, -1, NULL, 0);
     wchar_t* u16str[n + 1];
