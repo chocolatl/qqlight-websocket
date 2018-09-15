@@ -739,7 +739,7 @@ int serverStart(void) {
         return -1;
     }
     
-       DWORD dwThreadId;
+    DWORD dwThreadId;
     HANDLE hHandle = CreateThread(NULL, 0, (void*)receiveConnect, &clientSockets, 0, &dwThreadId);
     
     return 0;
