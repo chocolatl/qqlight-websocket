@@ -789,11 +789,11 @@ DllExport(int) Event_pluginStop(void) {
 }
 
 DllExport(int) Event_GetNewMsg (
-    int type,            // 1=好友消息 2=群消息 3=群临时消息 4=讨论组消息 5=讨论组临时消息 6=QQ临时消息
+    int type,              // 1=好友消息 2=群消息 3=群临时消息 4=讨论组消息 5=讨论组临时消息 6=QQ临时消息
     const char* group,     // 类型为1或6的时候，此参数为空字符串，其余情况下为群号或讨论组号
     const char* qq,        // 消息来源QQ号 "10000"都是来自系统的消息(比如某人被禁言或某人撤回消息等)
-     const char* msg,    // 消息内容
-    const char* msgid    // 消息id，撤回消息的时候会用到，群消息会存在，其余情况下为空  
+    const char* msg,       // 消息内容
+    const char* msgid      // 消息id，撤回消息的时候会用到，群消息会存在，其余情况下为空  
 ) {
 
     const char* u8Content = GBKToUTF8(msg);
