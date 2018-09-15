@@ -545,7 +545,7 @@ int wsClientDataHandle(const char* recvBuff, int recvLen, Client* client) {
 
     // 传入的数据不止包含当前帧，包含下一帧的数据
     if(consume != recvLen) {
-        return wsClientDataHandle(recvBuff + consume, recvLen - consume, wsFrame);
+        return wsClientDataHandle(recvBuff + consume, recvLen - consume, client);
     }
 
     return 0;
