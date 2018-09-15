@@ -333,7 +333,7 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, Client* cl
         const char* friendList = GBKToUTF8(QL_getFriendList(authCode));
         cJSON_AddItemToObject(root, "result", cJSON_Parse(friendList));
 
-        int* newLen;
+        int newLen;
         const char* jsonStr = cJSON_PrintUnformatted(root);
         const char* frame = convertToWebSocketFrame(jsonStr, frameType_text, strlen(jsonStr), &newLen);
         socketSend(client->socket, frame, newLen);
@@ -371,7 +371,7 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, Client* cl
         const char* groupList = GBKToUTF8(QL_getGroupList(authCode));
         cJSON_AddItemToObject(root, "result", cJSON_Parse(groupList));
 
-        int* newLen;
+        int newLen;
         const char* jsonStr = cJSON_PrintUnformatted(root);
         const char* frame = convertToWebSocketFrame(jsonStr, frameType_text, strlen(jsonStr), &newLen);
         socketSend(client->socket, frame, newLen);
@@ -391,7 +391,7 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, Client* cl
         const char* groupMemberList = GBKToUTF8(QL_getGroupMemberList(v_group, authCode));
         cJSON_AddItemToObject(root, "result", cJSON_Parse(groupMemberList));
 
-        int* newLen;
+        int newLen;
         const char* jsonStr = cJSON_PrintUnformatted(root);
         const char* frame = convertToWebSocketFrame(jsonStr, frameType_text, strlen(jsonStr), &newLen);
         socketSend(client->socket, frame, newLen);
@@ -429,7 +429,7 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, Client* cl
         const char* groupCard = GBKToUTF8(QL_getGroupCard(v_group, v_qq, authCode));
         cJSON_AddItemToObject(root, "result", cJSON_CreateString(groupCard));
 
-        int* newLen;
+        int newLen;
         const char* jsonStr = cJSON_PrintUnformatted(root);
         const char* frame = convertToWebSocketFrame(jsonStr, frameType_text, strlen(jsonStr), &newLen);
         socketSend(client->socket, frame, newLen);
@@ -449,7 +449,7 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, Client* cl
         const char* guid = QL_uploadImage(v_type, v_object, v_data, authCode);
         cJSON_AddItemToObject(root, "result", cJSON_CreateString(guid));
 
-        int* newLen;
+        int newLen;
         const char* jsonStr = cJSON_PrintUnformatted(root);
         const char* frame = convertToWebSocketFrame(jsonStr, frameType_text, strlen(jsonStr), &newLen);
         socketSend(client->socket, frame, newLen);
