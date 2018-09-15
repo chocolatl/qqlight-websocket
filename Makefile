@@ -11,7 +11,7 @@ wsframe.o: wsFrame.c wsFrame.h
 	gcc -o wsframe.o wsFrame.c -c -std=c99
 
 api.o: api.c api.h
-	gcc -o api.o api.c -c -std=c99
+	gcc -o api.o api.c -c -std=c99 -w
 
 cjson.o: lib/cjson/cJSON.c
 	gcc -O2 -o cjson.o lib/cjson/cJSON.c -c
