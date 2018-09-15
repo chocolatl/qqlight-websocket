@@ -7,7 +7,7 @@ $(dllname).dll: main.c wsFrame.o api.o cjson.o sha1.o b64_encode.o b64_decode.o
 	copy "./$(dllname).dll" "../QQLight/plugin/"
 # -Wl,-add-stdcall-alias告诉链接器同时生成不带@n的导出函数名，QQLight需要不带@n的导出函数名
 
-wsframe.o: wsFrame.c wsFrame.o
+wsframe.o: wsFrame.c wsFrame.h
 	gcc -o wsframe.o wsFrame.c -c -std=c99
 
 api.o: api.c api.h
