@@ -1,3 +1,4 @@
 .vscode
 test
+*.o
 websocket.protocol.plugin.dll
