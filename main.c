@@ -9,7 +9,7 @@
 #include "lib/sha1/sha1.h"
 #include "lib/base64/b64.h"
 #include "api.h"
-#include "wsFrame.h"
+#include "ws.h"
 
 #define DllExport(returnType) __declspec(dllexport) returnType __stdcall
 

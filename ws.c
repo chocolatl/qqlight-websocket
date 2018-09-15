@@ -1,7 +1,7 @@
 #include <stdbool.h>
 #include <windef.h>
 #include <stdlib.h>
-#include "wsFrame.h"
+#include "ws.h"
 
 // 初始化帧结构
 void initWsFrameStruct(WsFrame* wsFrame) {
