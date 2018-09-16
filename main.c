@@ -433,6 +433,27 @@ int wsClientDataHandle(const char* recvBuff, int recvLen, Client* client) {
     return 0;
 }
 
+// 从客户数组中移除指定位置的客户，并关闭连接
+// 如果被移除的客户不在数组末尾，数组末尾的客户会移动到被移除的客户所在位置
+// 所以如果调用该函数时正在遍历客户数组，记得回退遍历位置
+void removeClient(ClientSockets* clientSockets, int pos) {
+    if(pos < clientSockets->total - 1) {      // 该socket不处于数组末尾 
+        // 将数组末尾的socket填到当前位置 
+        clientSockets->clients[pos] = clientSockets->clients[--clientSockets->total];
+    } else {
+        clientSockets->total--;
+    }
+
+    struct linger so_linger;
+    so_linger.l_onoff = 1;
+    so_linger.l_linger = 1;
+    SOCKET socket = clientSockets->clients[pos].socket;
+    setsockopt(socket, SOL_SOCKET, SO_LINGER, &so_linger, sizeof(so_linger));
+    closesocket(socket);
+
+    pluginLog("removeClient", "Client socket closed, now length of clients: %d", clientSockets->total);
+}
+
 void receiveComingData(ClientSockets* clientSockets) {
 
     #define RECV_BUFLEN 40960
@@ -464,64 +485,48 @@ void receiveComingData(ClientSockets* clientSockets) {
     }
     
     for(int i = 0; i < clientSockets->total; i++) {
+
+        Client* client = &clientSockets->clients[i];
         
-        const SOCKET clientSocket = clientSockets->clients[i].socket;
-        
-        if(FD_ISSET(clientSocket, &fdread)) {
+        if(!FD_ISSET(client->socket, &fdread)) {
+            continue;
+        }
+
+        iResult = recv(client->socket, recvbuf, RECV_BUFLEN, 0);
+
+        if(iResult > 0) {
             
-            iResult = recv(clientSocket, recvbuf, RECV_BUFLEN, 0);  
-
-            if(iResult > 0) {
-                
-                pluginLog("receiveComingData", "Bytes received: %d", iResult);
-                
-                if(clientSockets->clients[i].protocol == websocketProtocol) {
-                    int result = wsClientDataHandle(recvbuf, iResult, &clientSockets->clients[i]);
-                    if(result == -1) goto removeClientSocket;
+            pluginLog("receiveComingData", "Bytes received: %d", iResult);
+            
+            // 协议升级
+            if(client->protocol == socketProtocol) {
+                int result = wsShakeHands(recvbuf, iResult, client->socket);
+                if(result != 0) {
+                    removeClient(clientSockets, i--);
                 } else {
-                    int result = wsShakeHands(recvbuf, iResult, clientSockets->clients[i].socket);
-                    if(result != 0) {
-                        goto removeClientSocket;
-                    } else {
-                        clientSockets->clients[i].protocol = websocketProtocol;
-                        initWsFrameStruct(&clientSockets->clients[i].wsFrame);        // 初始化ws帧结构
-                    }
+                    client->protocol = websocketProtocol;
+                    initWsFrameStruct(&client->wsFrame);        // 初始化ws帧结构
                 }
-
-            } else {
-                
-                if(iResult == 0) {
-                    // 客户端礼貌的关闭连接 
-                    pluginLog("receiveComingData", "Connection closing...");
-                } else {
-                    // 客户端异常关闭连接等情况
-                    pluginLog("receiveComingData", "Recv failed: %d", WSAGetLastError());
-                }
-                
-                // 从数组中移除该socket并调用closesocket 
-                removeClientSocket:
-                
-                // 该socket不处于数组末尾 
-                if(i < clientSockets->total - 1) {
-                    
-                    clientSockets->clients[i] = 
-                        clientSockets->clients[--clientSockets->total];  // 将数组末尾的socket填到当前位置 
-                                                
-                    i--;        // 回退循环计数，从当前位置继续循环 
-
-                } else {
-                    clientSockets->total--;
-                    i--;
-                }
-                
-                pluginLog("receiveComingData", "Now client sockets length: %d", clientSockets->total);
-                
-                struct linger so_linger;
-                so_linger.l_onoff = 1;
-                so_linger.l_linger = 1;
-                setsockopt(clientSocket, SOL_SOCKET, SO_LINGER, &so_linger, sizeof(so_linger));
-                closesocket(clientSocket);
             }
+            // WebSocket通信
+            else if(client->protocol == websocketProtocol) {
+                int result = wsClientDataHandle(recvbuf, iResult, client);
+                if(result == -1) {
+                    removeClient(clientSockets, i--);
+                }
+            }
+
+        } else {
+
+            if(iResult == 0) {
+                // 客户端礼貌的关闭连接 
+                pluginLog("receiveComingData", "Connection closing...");
+            } else {
+                // 客户端异常关闭连接等情况
+                pluginLog("receiveComingData", "Recv failed: %d", WSAGetLastError());
+            }
+            
+            removeClient(clientSockets, i--);
         }
     }
 
