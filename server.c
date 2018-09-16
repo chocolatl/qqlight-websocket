@@ -17,6 +17,9 @@ typedef struct {
 // 回调函数
 void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET socket);
 
+// 打印日志函数声明
+void pluginLog(const char* type, const char* format, ...);
+
 #define MAX_CLIENT_NUM FD_SETSIZE
 static struct {
     int    total;

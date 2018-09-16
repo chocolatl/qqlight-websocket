@@ -6,6 +6,9 @@
 #include "lib/base64/b64.h"
 #include "ws.h"
 
+// 打印日志函数声明
+void pluginLog(const char* type, const char* format, ...);
+
 // 初始化帧结构
 void initWsFrameStruct(WsFrame* wsFrame) {
     wsFrame->state = frameState_init;
