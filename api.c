@@ -32,6 +32,7 @@ int loadQQLightAPI(void) {
     GET_DLL_FUNC(QL_getGroupCard, "Api_GetGroupCard");
     GET_DLL_FUNC(QL_uploadImage, "Api_UpLoadPic");
     GET_DLL_FUNC(QL_getQQInfo, "Api_GetQQInfo");
+    GET_DLL_FUNC(QL_getGroupInfo, "Api_GetGroupInfo");
 
     isLoaded = true;
     return 0;
