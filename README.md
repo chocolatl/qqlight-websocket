@@ -224,6 +224,7 @@ ws.on('message', data => {
 所获得的图像替换符只能对`type`和`object`指定的对象使用，否则图片可能无法显示
 
 ### 接口.获取QQ资料
+
 ```js
 {
     "method": "getQQInfo",
@@ -234,10 +235,23 @@ ws.on('message', data => {
 ```
 
 ### 接口.获取群资料
+
 ```js
 {
     "method": "getGroupInfo",
     "params": {
+        "group": ""
+    }
+}
+```
+
+### 接口.邀请好友入群
+
+```js
+{
+    "method": "inviteIntoGroup",
+    "params": {
+        "qq": "",
         "group": ""
     }
 }

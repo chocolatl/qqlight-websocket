@@ -307,6 +307,12 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET soc
         free((void*)info);
         free((void*)jsonStr);
 
+    } else if (METHOD_IS("inviteIntoGroup")) {
+
+        PARAMS_CHECK(e_qq && e_group);
+
+        QL_inviteIntoGroup(v_group, v_qq, authCode);
+
     } else {
         pluginLog("jsonRPC", "Unknown method '%s'", v_method);
     }
