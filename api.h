@@ -1,5 +1,9 @@
 #include <stdbool.h>
 
+#ifndef QLWS_API_H
+
+#define QLWS_API_H
+
 // loadQQLightAPI 
 int loadQQLightAPI(void);
 
@@ -17,3 +21,5 @@ void __stdcall (*QL_addGroup)(const char* group, const char* message, const char
 void __stdcall (*QL_quitGroup)(const char* group, const char* authCode);
 const char* __stdcall (*QL_getGroupCard)(const char* group, const char* qq, const char* authCode);
 const char* __stdcall (*QL_uploadImage)(int type, const char* object, const char* data, const char* authCode);
+
+#endif

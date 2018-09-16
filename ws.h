@@ -1,5 +1,9 @@
 #include <stdint.h>
 
+#ifndef QLWS_WS_H
+
+#define QLWS_WS_H
+
 typedef enum FrameType {
     frameType_continuation,
     frameType_text,
@@ -42,3 +46,5 @@ char* convertToWebSocketFrame(const char* data, FrameType type, size_t len, size
 int readWebSocketFrameStream(WsFrame* wsFrame, const char* buff, int len);
 void freeWebSocketFrame(WsFrame* wsFrame);
 int wsShakeHands(const char* recvBuff, int recvLen, SOCKET socket);
+
+#endif
