@@ -385,9 +385,9 @@ int wsClientDataHandle(const char* recvBuff, int recvLen, Client* client) {
         }
 
         // 遇到意料之外的帧类型
-        if( wsFrame->frameType == frameType_binary         ||
-            wsFrame->frameType == frameType_pong        ||
-            wsFrame->frameType == frameType_continuation
+        if(wsFrame->frameType == frameType_binary      ||
+           wsFrame->frameType == frameType_pong        ||
+           wsFrame->frameType == frameType_continuation
         ) {
             pluginLog("wsClientDataHandle", "Unexpected frame type");
             return -1;
