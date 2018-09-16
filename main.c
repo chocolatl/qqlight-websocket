@@ -128,6 +128,13 @@ int socketSend(SOCKET socket, const char* buff, int len) {
     return iSendResult;
 }
 
+void socketSendToAll(ClientSockets* clientSockets, const char* buff, int len) {
+    for(int i = 0; i < clientSockets->total; i++) {
+        pluginLog("socketSendToAll", "Send data to %dst client", i);
+        socketSend(clientSockets->clients[i].socket, buff, len);
+    }
+}
+
 void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, Client* client) {
     
     // 注意，payload的文本数据不是以\0结尾
@@ -707,9 +714,7 @@ DllExport(int) Event_GetNewMsg (
     size_t len;
     const char* frame = convertToWebSocketFrame(jsonStr, frameType_text, strlen(jsonStr), &len);
 
-    for(int i = 0; i < clientSockets.total; i++) {
-        socketSend(clientSockets.clients[i].socket, frame, len);
-    }
+    socketSendToAll(&clientSockets, frame, len);
 
     cJSON_Delete(root);
     free((void*)u8Content);
