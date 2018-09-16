@@ -142,7 +142,7 @@ void wsFrameSendToAll(ClientSockets* clientSockets, const char* buff, int len,  
     }
 }
 
-void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, Client* client) {
+void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET socket) {
     
     // 注意，payload的文本数据不是以\0结尾
     pluginLog("wsClientDataHandle","Payload data is %.*s", payloadLen > 128 ? 128 : (unsigned int)payloadLen, payload);
@@ -235,7 +235,7 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, Client* cl
         cJSON_AddItemToObject(root, "result", cJSON_Parse(friendList));
 
         const char* jsonStr = cJSON_PrintUnformatted(root);
-        wsFrameSend(client->socket, jsonStr, strlen(jsonStr), frameType_text);
+        wsFrameSend(socket, jsonStr, strlen(jsonStr), frameType_text);
 
         cJSON_Delete(root);
         free((void*)friendList);
@@ -270,7 +270,7 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, Client* cl
         cJSON_AddItemToObject(root, "result", cJSON_Parse(groupList));
 
         const char* jsonStr = cJSON_PrintUnformatted(root);
-        wsFrameSend(client->socket, jsonStr, strlen(jsonStr), frameType_text);
+        wsFrameSend(socket, jsonStr, strlen(jsonStr), frameType_text);
 
         cJSON_Delete(root);
         free((void*)groupList);
@@ -287,7 +287,7 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, Client* cl
         cJSON_AddItemToObject(root, "result", cJSON_Parse(groupMemberList));
 
         const char* jsonStr = cJSON_PrintUnformatted(root);
-        wsFrameSend(client->socket, jsonStr, strlen(jsonStr), frameType_text);
+        wsFrameSend(socket, jsonStr, strlen(jsonStr), frameType_text);
 
         cJSON_Delete(root);
         free((void*)groupMemberList);
@@ -322,7 +322,7 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, Client* cl
         cJSON_AddItemToObject(root, "result", cJSON_CreateString(groupCard));
 
         const char* jsonStr = cJSON_PrintUnformatted(root);
-        wsFrameSend(client->socket, jsonStr, strlen(jsonStr), frameType_text);
+        wsFrameSend(socket, jsonStr, strlen(jsonStr), frameType_text);
 
         cJSON_Delete(root);
         free((void*)groupCard);
@@ -339,7 +339,7 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, Client* cl
         cJSON_AddItemToObject(root, "result", cJSON_CreateString(guid));
 
         const char* jsonStr = cJSON_PrintUnformatted(root);
-        wsFrameSend(client->socket, jsonStr, strlen(jsonStr), frameType_text);
+        wsFrameSend(socket, jsonStr, strlen(jsonStr), frameType_text);
 
         cJSON_Delete(root);
         free((void*)jsonStr);
@@ -410,7 +410,7 @@ int wsClientDataHandle(const char* recvBuff, int recvLen, Client* client) {
 
         // 处理文本数据
         if(wsFrame->frameType == frameType_text) {
-            wsClientTextDataHandle(payload, payloadLen, client);
+            wsClientTextDataHandle(payload, payloadLen, client->socket);
         }
 
     }
