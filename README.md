@@ -223,6 +223,16 @@ ws.on('message', data => {
 
 所获得的图像替换符只能对`type`和`object`指定的对象使用，否则图片可能无法显示
 
+### 接口.获取QQ资料
+```js
+{
+    "method": "getQQInfo",
+    "params": {
+        "qq": ""
+    }
+}
+```
+
 ### 替换符.at
 
 在发送的群消息中使用`[QQ:at=xxx]`表示at某个群成员，其中`xxx`可以替换为任意群成员QQ
