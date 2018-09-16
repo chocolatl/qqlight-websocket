@@ -88,7 +88,7 @@ char* UTF8ToGBK(const char* str) {
     const int CODE_PAGE = 54936;
 
     int n = MultiByteToWideChar(CP_UTF8, 0, str, -1, NULL, 0);
-    wchar_t* u16str[n + 1];
+    wchar_t u16str[n + 1];
     MultiByteToWideChar(CP_UTF8, 0, str, -1, u16str, n);
 
     n = WideCharToMultiByte(CODE_PAGE, 0, u16str, -1, NULL, 0, NULL, NULL);
