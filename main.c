@@ -38,11 +38,12 @@ typedef struct Client {
 } Client;
 
 #define MAX_CLIENT_NUM FD_SETSIZE
-typedef struct ClientSockets {
+struct ClientSockets {
     int    total;
     Client clients[MAX_CLIENT_NUM];
-} ClientSockets;
+} clientSockets;
 
+SOCKET serverSocket;
 
 void pluginLog(const char* type, const char* format, ...) {
     
@@ -135,10 +136,10 @@ int wsFrameSend(SOCKET socket, const char* buff, int len, FrameType type) {
     return iSendResult;
 }
 
-void wsFrameSendToAll(ClientSockets* clientSockets, const char* buff, int len,  FrameType type) {
-    for(int i = 0; i < clientSockets->total; i++) {
+void wsFrameSendToAll(const char* buff, int len,  FrameType type) {
+    for(int i = 0; i < clientSockets.total; i++) {
         pluginLog("wsFrameSendToAll", "Send data to %dst client", i);
-        wsFrameSend(clientSockets->clients[i].socket, buff, len, type);
+        wsFrameSend(clientSockets.clients[i].socket, buff, len, type);
     }
 }
 
@@ -437,25 +438,25 @@ int wsClientDataHandle(const char* recvBuff, int recvLen, Client* client) {
 // 从客户数组中移除指定位置的客户，并关闭连接
 // 如果被移除的客户不在数组末尾，数组末尾的客户会移动到被移除的客户所在位置
 // 所以如果调用该函数时正在遍历客户数组，记得回退遍历位置
-void removeClient(ClientSockets* clientSockets, int pos) {
-    if(pos < clientSockets->total - 1) {      // 该socket不处于数组末尾 
+void removeClient(int pos) {
+    if(pos < clientSockets.total - 1) {      // 该socket不处于数组末尾 
         // 将数组末尾的socket填到当前位置 
-        clientSockets->clients[pos] = clientSockets->clients[--clientSockets->total];
+        clientSockets.clients[pos] = clientSockets.clients[--clientSockets.total];
     } else {
-        clientSockets->total--;
+        clientSockets.total--;
     }
 
     struct linger so_linger;
     so_linger.l_onoff = 1;
     so_linger.l_linger = 1;
-    SOCKET socket = clientSockets->clients[pos].socket;
+    SOCKET socket = clientSockets.clients[pos].socket;
     setsockopt(socket, SOL_SOCKET, SO_LINGER, &so_linger, sizeof(so_linger));
     closesocket(socket);
 
-    pluginLog("removeClient", "Client socket closed, now length of clients: %d", clientSockets->total);
+    pluginLog("removeClient", "Client socket closed, now length of clients: %d", clientSockets.total);
 }
 
-void receiveComingData(ClientSockets* clientSockets) {
+void receiveComingData(void) {
 
     #define RECV_BUFLEN 40960
 
@@ -469,8 +470,8 @@ void receiveComingData(ClientSockets* clientSockets) {
     receivingDataLoop:
         
     FD_ZERO(&fdread); 
-    for(int i = 0; i < clientSockets->total; i++) {     
-        FD_SET(clientSockets->clients[i].socket, &fdread);   
+    for(int i = 0; i < clientSockets.total; i++) {     
+        FD_SET(clientSockets.clients[i].socket, &fdread);   
     }
     
     ret = select(0, &fdread, NULL, NULL, &tv);
@@ -485,9 +486,9 @@ void receiveComingData(ClientSockets* clientSockets) {
         Sleep(1); 
     }
     
-    for(int i = 0; i < clientSockets->total; i++) {
+    for(int i = 0; i < clientSockets.total; i++) {
 
-        Client* client = &clientSockets->clients[i];
+        Client* client = &clientSockets.clients[i];
         
         if(!FD_ISSET(client->socket, &fdread)) {
             continue;
@@ -503,7 +504,7 @@ void receiveComingData(ClientSockets* clientSockets) {
             if(client->protocol == socketProtocol) {
                 int result = wsShakeHands(recvbuf, iResult, client->socket);
                 if(result != 0) {
-                    removeClient(clientSockets, i--);
+                    removeClient(i--);
                 } else {
                     client->protocol = websocketProtocol;
                     initWsFrameStruct(&client->wsFrame);        // 初始化ws帧结构
@@ -513,7 +514,7 @@ void receiveComingData(ClientSockets* clientSockets) {
             else if(client->protocol == websocketProtocol) {
                 int result = wsClientDataHandle(recvbuf, iResult, client);
                 if(result == -1) {
-                    removeClient(clientSockets, i--);
+                    removeClient(i--);
                 }
             }
 
@@ -527,21 +528,19 @@ void receiveComingData(ClientSockets* clientSockets) {
                 pluginLog("receiveComingData", "Recv failed: %d", WSAGetLastError());
             }
             
-            removeClient(clientSockets, i--);
+            removeClient(i--);
         }
     }
 
     goto receivingDataLoop;
 }
 
-SOCKET serverSocket;
-
-void receiveConnect(ClientSockets* clientSockets) {
+void receiveConnect(void) {
     
     DWORD   dwThreadId;
-    SOCKET     clientSocket;
+    SOCKET  clientSocket;
     
-    HANDLE hHandle = CreateThread(NULL, 0, (void*)receiveComingData, clientSockets, 0, &dwThreadId);
+    HANDLE hHandle = CreateThread(NULL, 0, (void*)receiveComingData, NULL, 0, &dwThreadId);
     
     SOCKADDR_IN client; 
     
@@ -551,7 +550,7 @@ void receiveConnect(ClientSockets* clientSockets) {
     clientSocket = accept(serverSocket, (struct sockaddr *)&client, NULL);   
 
     // 当连接数达到上限时拒绝连接
-    if(clientSockets->total >= MAX_CLIENT_NUM) {
+    if(clientSockets.total >= MAX_CLIENT_NUM) {
         closesocket(clientSocket);
         goto receivingConnectLoop;
     }
@@ -568,10 +567,10 @@ void receiveConnect(ClientSockets* clientSockets) {
             pluginLog("receiveConnect", "Closing all client sockets...");
 
             // 关闭所有客户端连接 
-            for(int i = 0; i < clientSockets->total; i++) {
-                closesocket(clientSockets->clients[i].socket);       
+            for(int i = 0; i < clientSockets.total; i++) {
+                closesocket(clientSockets.clients[i].socket);       
             }
-            clientSockets->total = 0;
+            clientSockets.total = 0;
             
             ExitThread(NULL);     // 退出 
         }
@@ -582,15 +581,12 @@ void receiveConnect(ClientSockets* clientSockets) {
     
     pluginLog("receiveConnect", "Accepted client: %s:%d", inet_ntoa(client.sin_addr), ntohs(client.sin_port));
     
-    // Add socket to fdTotal
-    clientSockets->clients[clientSockets->total].socket = clientSocket;
-    clientSockets->clients[clientSockets->total].protocol = socketProtocol;
-    clientSockets->total++;
+    clientSockets.clients[clientSockets.total].socket = clientSocket;
+    clientSockets.clients[clientSockets.total].protocol = socketProtocol;
+    clientSockets.total++;
 
     goto receivingConnectLoop;
 }
-
-ClientSockets clientSockets = {total: 0};
 
 int serverStart(void) {
 
@@ -631,9 +627,11 @@ int serverStart(void) {
         WSACleanup();
         return -1;
     }
+
+    clientSockets.total = 0;
     
     DWORD dwThreadId;
-    HANDLE hHandle = CreateThread(NULL, 0, (void*)receiveConnect, &clientSockets, 0, &dwThreadId);
+    HANDLE hHandle = CreateThread(NULL, 0, (void*)receiveConnect, NULL, 0, &dwThreadId);
     
     return 0;
 }
@@ -705,7 +703,7 @@ DllExport(int) Event_GetNewMsg (
 
     const char* jsonStr = cJSON_PrintUnformatted(root);
 
-    wsFrameSendToAll(&clientSockets, jsonStr, strlen(jsonStr), frameType_text);
+    wsFrameSendToAll(jsonStr, strlen(jsonStr), frameType_text);
 
     cJSON_Delete(root);
     free((void*)u8Content);
