@@ -115,23 +115,29 @@ char* UTF8ToGBK(const char* str) {
     return gbstr;
 }
 
-int socketSend(SOCKET socket, const char* buff, int len) {
+// 将数据转换成WebSocket帧并发送
+int wsFrameSend(SOCKET socket, const char* buff, int len, FrameType type) {
 
-    int iSendResult = send(socket, buff, len, 0);
+    int newLen;
+    const char* frame = convertToWebSocketFrame(buff, type, len, &newLen);
+
+    int iSendResult = send(socket, frame, newLen, 0);
 
     if(iSendResult == SOCKET_ERROR) {
-        pluginLog("socketSend", "Send failed: %d", WSAGetLastError());
+        pluginLog("wsFrameSend", "Send failed: %d", WSAGetLastError());
         return iSendResult;
     }
+
+    free((void*)frame);
     
-    pluginLog("socketSend", "Bytes sent: %d", iSendResult);
+    pluginLog("wsFrameSend", "Bytes sent: %d", iSendResult);
     return iSendResult;
 }
 
-void socketSendToAll(ClientSockets* clientSockets, const char* buff, int len) {
+void wsFrameSendToAll(ClientSockets* clientSockets, const char* buff, int len,  FrameType type) {
     for(int i = 0; i < clientSockets->total; i++) {
-        pluginLog("socketSendToAll", "Send data to %dst client", i);
-        socketSend(clientSockets->clients[i].socket, buff, len);
+        pluginLog("wsFrameSendToAll", "Send data to %dst client", i);
+        wsFrameSend(clientSockets->clients[i].socket, buff, len, type);
     }
 }
 
@@ -227,15 +233,12 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, Client* cl
         const char* friendList = GBKToUTF8(QL_getFriendList(authCode));
         cJSON_AddItemToObject(root, "result", cJSON_Parse(friendList));
 
-        int newLen;
         const char* jsonStr = cJSON_PrintUnformatted(root);
-        const char* frame = convertToWebSocketFrame(jsonStr, frameType_text, strlen(jsonStr), &newLen);
-        socketSend(client->socket, frame, newLen);
+        wsFrameSend(client->socket, jsonStr, strlen(jsonStr), frameType_text);
 
         cJSON_Delete(root);
         free((void*)friendList);
         free((void*)jsonStr);
-        free((void*)frame);
 
     } else if (METHOD_IS("addFriend")) {
 
@@ -265,15 +268,12 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, Client* cl
         const char* groupList = GBKToUTF8(QL_getGroupList(authCode));
         cJSON_AddItemToObject(root, "result", cJSON_Parse(groupList));
 
-        int newLen;
         const char* jsonStr = cJSON_PrintUnformatted(root);
-        const char* frame = convertToWebSocketFrame(jsonStr, frameType_text, strlen(jsonStr), &newLen);
-        socketSend(client->socket, frame, newLen);
+        wsFrameSend(client->socket, jsonStr, strlen(jsonStr), frameType_text);
 
         cJSON_Delete(root);
         free((void*)groupList);
         free((void*)jsonStr);
-        free((void*)frame);
 
     } else if (METHOD_IS("getGroupMemberList")) {
 
@@ -285,15 +285,12 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, Client* cl
         const char* groupMemberList = GBKToUTF8(QL_getGroupMemberList(v_group, authCode));
         cJSON_AddItemToObject(root, "result", cJSON_Parse(groupMemberList));
 
-        int newLen;
         const char* jsonStr = cJSON_PrintUnformatted(root);
-        const char* frame = convertToWebSocketFrame(jsonStr, frameType_text, strlen(jsonStr), &newLen);
-        socketSend(client->socket, frame, newLen);
+        wsFrameSend(client->socket, jsonStr, strlen(jsonStr), frameType_text);
 
         cJSON_Delete(root);
         free((void*)groupMemberList);
         free((void*)jsonStr);
-        free((void*)frame);
 
     } else if (METHOD_IS("addGroup")) {
 
@@ -323,15 +320,12 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, Client* cl
         const char* groupCard = GBKToUTF8(QL_getGroupCard(v_group, v_qq, authCode));
         cJSON_AddItemToObject(root, "result", cJSON_CreateString(groupCard));
 
-        int newLen;
         const char* jsonStr = cJSON_PrintUnformatted(root);
-        const char* frame = convertToWebSocketFrame(jsonStr, frameType_text, strlen(jsonStr), &newLen);
-        socketSend(client->socket, frame, newLen);
+        wsFrameSend(client->socket, jsonStr, strlen(jsonStr), frameType_text);
 
         cJSON_Delete(root);
         free((void*)groupCard);
         free((void*)jsonStr);
-        free((void*)frame);
 
     } else if (METHOD_IS("uploadImage")) {
 
@@ -343,14 +337,11 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, Client* cl
         const char* guid = QL_uploadImage(v_type, v_object, v_data, authCode);
         cJSON_AddItemToObject(root, "result", cJSON_CreateString(guid));
 
-        int newLen;
         const char* jsonStr = cJSON_PrintUnformatted(root);
-        const char* frame = convertToWebSocketFrame(jsonStr, frameType_text, strlen(jsonStr), &newLen);
-        socketSend(client->socket, frame, newLen);
+        wsFrameSend(client->socket, jsonStr, strlen(jsonStr), frameType_text);
 
         cJSON_Delete(root);
         free((void*)jsonStr);
-        free((void*)frame);
 
     } else {
         pluginLog("jsonRPC", "Unknown method '%s'", v_method);
@@ -412,11 +403,8 @@ int wsClientDataHandle(const char* recvBuff, int recvLen, Client* client) {
 
         // 心跳
         if(wsFrame->frameType == frameType_ping) {
-            int newLen;
-            const char* frame = convertToWebSocketFrame(payload, frameType_pong, payloadLen, &newLen);
             pluginLog("wsClientDataHandle", "pong");
-            socketSend(client->socket, frame, newLen);
-            free((void*)frame);
+            wsFrameSend(client->socket, payload, payloadLen, frameType_pong);
         }
 
         // 处理文本数据
@@ -711,15 +699,11 @@ DllExport(int) Event_GetNewMsg (
 
     const char* jsonStr = cJSON_PrintUnformatted(root);
 
-    size_t len;
-    const char* frame = convertToWebSocketFrame(jsonStr, frameType_text, strlen(jsonStr), &len);
-
-    socketSendToAll(&clientSockets, frame, len);
+    wsFrameSendToAll(&clientSockets, jsonStr, strlen(jsonStr), frameType_text);
 
     cJSON_Delete(root);
     free((void*)u8Content);
     free((void*)jsonStr);
-    free((void*)frame);
 
     return 0;    // 返回0下个插件继续处理该事件，返回1拦截此事件不让其他插件执行
 }
