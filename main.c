@@ -322,7 +322,7 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET soc
     cJSON_Delete(json);
 }
 
-DllExport(const char*) __stdcall Information(const char* _authCode) {
+DllExport(const char*) Information(const char* _authCode) {
     
     // 获取authCode
     strncpy(authCode, _authCode, sizeof(authCode) - 1);
