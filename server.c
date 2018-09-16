@@ -151,7 +151,7 @@ void removeClient(int pos) {
     so_linger.l_onoff = 1;
     so_linger.l_linger = 1;
     SOCKET socket = clientSockets.clients[pos].socket;
-    setsockopt(socket, SOL_SOCKET, SO_LINGER, &so_linger, sizeof(so_linger));
+    setsockopt(socket, SOL_SOCKET, SO_LINGER, (const char*)&so_linger, sizeof(so_linger));
     closesocket(socket);
 
     pluginLog("removeClient", "Client socket closed, now length of clients: %d", clientSockets.total);
@@ -263,7 +263,7 @@ void receiveConnect(void) {
         // serverSocket不是一个套接字，即serverSocket已经执行了closesocket 
         if(errCode == WSAENOTSOCK) {
             pluginLog("receiveConnect", "Threads will exit");
-            TerminateThread(hHandle, NULL);        // 粗暴的终止receiveComingData线程 
+            TerminateThread(hHandle, 0);        // 粗暴的终止receiveComingData线程 
             
             pluginLog("receiveConnect", "Closing all client sockets...");
 
@@ -273,7 +273,7 @@ void receiveConnect(void) {
             }
             clientSockets.total = 0;
             
-            ExitThread(NULL);     // 退出 
+            ExitThread(0);     // 退出 
         }
         
         pluginLog("receiveConnect", "Accept failed: %d", WSAGetLastError());
