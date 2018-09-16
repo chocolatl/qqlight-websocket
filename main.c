@@ -125,12 +125,13 @@ int wsFrameSend(SOCKET socket, const char* buff, int len, FrameType type) {
 
     if(iSendResult == SOCKET_ERROR) {
         pluginLog("wsFrameSend", "Send failed: %d", WSAGetLastError());
-        return iSendResult;
+        goto wsFrameSendEnd;
     }
 
-    free((void*)frame);
-    
     pluginLog("wsFrameSend", "Bytes sent: %d", iSendResult);
+    
+    wsFrameSendEnd:    
+    free((void*)frame);
     return iSendResult;
 }
 
