@@ -267,8 +267,17 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET soc
         cJSON* root = cJSON_CreateObject();
         cJSON_AddItemToObject(root, "id", cJSON_CreateString(v_id));
 
-        const char* guid = QL_uploadImage(v_type, v_object, v_data, authCode);
-        cJSON_AddItemToObject(root, "result", cJSON_CreateString(guid));
+        const char* text = QL_uploadImage(v_type, v_object, v_data, authCode);
+        int textLen = strlen(text);
+
+        if(textLen > 9 && textLen < 100 && strstr(text, "[QQ:pic=") == text) {
+            char guid[textLen + 1];
+            strcpy(guid, text);
+            guid[textLen - 1] = '\0';   // 去除末尾的']'
+            cJSON_AddItemToObject(root, "result", cJSON_CreateString(guid + 8));    // 去除开头的'[QQ:pic='
+        } else {
+            cJSON_AddItemToObject(root, "result", cJSON_CreateString(""));
+        }
 
         const char* jsonStr = cJSON_PrintUnformatted(root);
         wsFrameSend(socket, jsonStr, strlen(jsonStr), frameType_text);
