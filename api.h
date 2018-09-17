@@ -29,5 +29,6 @@ const char* __stdcall (*QL_getLoginAccount)(const char* authCode);
 void __stdcall (*QL_setSignature)(const char* content, const char* authCode);
 const char* __stdcall (*QL_getNickname)(const char* qq, const char* authCode);
 const char* __stdcall (*QL_getPraiseCount)(const char* qq, const char* authCode);
+void __stdcall (*QL_givePraise)(const char* qq, const char* authCode);
 
 #endif

@@ -379,6 +379,12 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET soc
         free((void*)count);
         free((void*)jsonStr);
 
+    } else if (METHOD_IS("givePraise")) {
+
+        PARAMS_CHECK(e_qq);
+
+        QL_givePraise(v_qq, authCode);
+
     } else {
         pluginLog("jsonRPC", "Unknown method '%s'", v_method);
     }
