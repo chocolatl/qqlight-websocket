@@ -330,7 +330,7 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET soc
         cJSON_AddItemToObject(root, "id", cJSON_CreateString(v_id));
 
         const char* account = GBKToUTF8(QL_getLoginAccount(authCode));
-        cJSON_AddItemToObject(root, "result", cJSON_Parse(account));
+        cJSON_AddItemToObject(root, "result", cJSON_CreateString(account));
 
         const char* jsonStr = cJSON_PrintUnformatted(root);
         wsFrameSend(socket, jsonStr, strlen(jsonStr), frameType_text);
