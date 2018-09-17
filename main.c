@@ -322,6 +322,23 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET soc
 
         QL_setGroupCard(v_group, v_qq, v_name, authCode);
 
+    } else if (METHOD_IS("getLoginAccount")) {
+
+        PARAMS_CHECK(e_id);
+
+        cJSON* root = cJSON_CreateObject();
+        cJSON_AddItemToObject(root, "id", cJSON_CreateString(v_id));
+
+        const char* account = GBKToUTF8(QL_getLoginAccount(authCode));
+        cJSON_AddItemToObject(root, "result", cJSON_Parse(account));
+
+        const char* jsonStr = cJSON_PrintUnformatted(root);
+        wsFrameSend(socket, jsonStr, strlen(jsonStr), frameType_text);
+
+        cJSON_Delete(root);
+        free((void*)account);
+        free((void*)jsonStr);
+
     } else {
         pluginLog("jsonRPC", "Unknown method '%s'", v_method);
     }

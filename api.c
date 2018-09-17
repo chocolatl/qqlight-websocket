@@ -35,6 +35,7 @@ int loadQQLightAPI(void) {
     GET_DLL_FUNC(QL_getGroupInfo, "Api_GetGroupInfo");
     GET_DLL_FUNC(QL_inviteIntoGroup, "Api_InviteFriend");
     GET_DLL_FUNC(QL_setGroupCard, "Api_SetGroupCard");
+    GET_DLL_FUNC(QL_getLoginAccount, "Api_GetLoginQQ");
 
     isLoaded = true;
     return 0;
