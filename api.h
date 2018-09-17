@@ -24,5 +24,6 @@ const char* __stdcall (*QL_uploadImage)(int type, const char* object, const char
 const char* __stdcall (*QL_getQQInfo)(const char* qq, const char* authCode);
 const char* __stdcall (*QL_getGroupInfo)(const char* group, const char* authCode);
 void __stdcall (*QL_inviteIntoGroup)(const char* group, const char* qq, const char* authCode);
+void __stdcall (*QL_setGroupCard)(const char* group, const char* qq, const char* name, const char* authCode);
 
 #endif

@@ -115,6 +115,7 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET soc
     const cJSON* j_message = cJSON_GetObjectItemCaseSensitive(j_params, "message");
     const cJSON* j_object  = cJSON_GetObjectItemCaseSensitive(j_params, "object");
     const cJSON* j_data    = cJSON_GetObjectItemCaseSensitive(j_params, "data");
+    const cJSON* j_name    = cJSON_GetObjectItemCaseSensitive(j_params, "name");
 
     const cJSON_bool e_type    = cJSON_IsNumber(j_type);
     const cJSON_bool e_group   = cJSON_IsString(j_group);
@@ -124,6 +125,7 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET soc
     const cJSON_bool e_message = cJSON_IsString(j_message);
     const cJSON_bool e_object  = cJSON_IsString(j_object);
     const cJSON_bool e_data    = cJSON_IsString(j_data);
+    const cJSON_bool e_name    = cJSON_IsString(j_name);
 
     int         v_type    = e_type    ?  j_type->valueint        :  -1;
     const char* v_group   = e_group   ?  j_group->valuestring    :  NULL;
@@ -133,6 +135,7 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET soc
     const char* v_message = e_message ?  j_message->valuestring  :  NULL;
     const char* v_object  = e_object  ?  j_object->valuestring   :  NULL;
     const char* v_data    = e_data    ?  j_data->valuestring     :  NULL;
+    const char* v_name    = e_name    ?  j_name->valuestring     :  NULL;
  
     pluginLog("jsonRPC", "Client call '%s' method", v_method);
 
@@ -312,6 +315,12 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET soc
         PARAMS_CHECK(e_qq && e_group);
 
         QL_inviteIntoGroup(v_group, v_qq, authCode);
+
+    } else if (METHOD_IS("setGroupCard")) {
+
+        PARAMS_CHECK(e_qq && e_group && e_name);
+
+        QL_setGroupCard(v_group, v_qq, v_name, authCode);
 
     } else {
         pluginLog("jsonRPC", "Unknown method '%s'", v_method);
