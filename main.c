@@ -345,6 +345,23 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET soc
 
         QL_setSignature(v_content, authCode);
 
+    } else if (METHOD_IS("getNickname")) {
+
+        PARAMS_CHECK(e_id && e_qq);
+
+        cJSON* root = cJSON_CreateObject();
+        cJSON_AddItemToObject(root, "id", cJSON_CreateString(v_id));
+
+        const char* nickname = GBKToUTF8(QL_getNickname(v_qq, authCode));
+        cJSON_AddItemToObject(root, "result", cJSON_CreateString(nickname));
+
+        const char* jsonStr = cJSON_PrintUnformatted(root);
+        wsFrameSend(socket, jsonStr, strlen(jsonStr), frameType_text);
+
+        cJSON_Delete(root);
+        free((void*)nickname);
+        free((void*)jsonStr);
+
     } else {
         pluginLog("jsonRPC", "Unknown method '%s'", v_method);
     }
