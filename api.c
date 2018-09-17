@@ -38,6 +38,7 @@ int loadQQLightAPI(void) {
     GET_DLL_FUNC(QL_getLoginAccount, "Api_GetLoginQQ");
     GET_DLL_FUNC(QL_setSignature, "Api_SetSignature");
     GET_DLL_FUNC(QL_getNickname, "Api_GetNick");
+    GET_DLL_FUNC(QL_getPraiseCount, "Api_GetPraiseNum");
 
     isLoaded = true;
     return 0;

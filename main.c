@@ -362,6 +362,23 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET soc
         free((void*)nickname);
         free((void*)jsonStr);
 
+    } else if (METHOD_IS("getPraiseCount")) {
+
+        PARAMS_CHECK(e_id && e_qq);
+
+        cJSON* root = cJSON_CreateObject();
+        cJSON_AddItemToObject(root, "id", cJSON_CreateString(v_id));
+
+        const char* count = GBKToUTF8(QL_getPraiseCount(v_qq, authCode));
+        cJSON_AddItemToObject(root, "result", cJSON_CreateString(count));
+
+        const char* jsonStr = cJSON_PrintUnformatted(root);
+        wsFrameSend(socket, jsonStr, strlen(jsonStr), frameType_text);
+
+        cJSON_Delete(root);
+        free((void*)count);
+        free((void*)jsonStr);
+
     } else {
         pluginLog("jsonRPC", "Unknown method '%s'", v_method);
     }

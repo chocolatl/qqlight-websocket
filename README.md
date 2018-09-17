@@ -306,6 +306,17 @@ ws.on('message', data => {
 }
 ```
 
+### 接口.获取名片点赞数量
+
+```js
+{
+    "method": "getPraiseCount",
+    "params": {
+        "qq": ""
+    }
+}
+```
+
 ### 替换符.at
 
 在发送的群消息中使用`[QQ:at=xxx]`表示at某个群成员，其中`xxx`可以替换为任意群成员QQ
