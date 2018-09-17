@@ -339,6 +339,12 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET soc
         free((void*)account);
         free((void*)jsonStr);
 
+    } else if (METHOD_IS("setSignature")) {
+
+        PARAMS_CHECK(e_content);
+
+        QL_setSignature(v_content, authCode);
+
     } else {
         pluginLog("jsonRPC", "Unknown method '%s'", v_method);
     }

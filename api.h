@@ -26,5 +26,6 @@ const char* __stdcall (*QL_getGroupInfo)(const char* group, const char* authCode
 void __stdcall (*QL_inviteIntoGroup)(const char* group, const char* qq, const char* authCode);
 void __stdcall (*QL_setGroupCard)(const char* group, const char* qq, const char* name, const char* authCode);
 const char* __stdcall (*QL_getLoginAccount)(const char* authCode);
+void __stdcall (*QL_setSignature)(const char* content, const char* authCode);
 
 #endif
