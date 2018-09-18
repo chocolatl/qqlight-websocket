@@ -406,6 +406,12 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET soc
             QL_handleFriendRequest(v_qq, v_type, "", authCode);
         }
 
+    } else if (METHOD_IS("setState")) {
+
+        PARAMS_CHECK(e_type);
+
+        QL_setState(v_type, authCode);
+
     } else {
         pluginLog("jsonRPC", "Unknown method '%s'", v_method);
     }

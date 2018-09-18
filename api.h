@@ -31,5 +31,6 @@ const char* __stdcall (*QL_getNickname)(const char* qq, const char* authCode);
 const char* __stdcall (*QL_getPraiseCount)(const char* qq, const char* authCode);
 void __stdcall (*QL_givePraise)(const char* qq, const char* authCode);
 void __stdcall (*QL_handleFriendRequest)(const char* qq, int type, const char* message, const char* authCode);
+void __stdcall (*QL_setState)(int type, const char* authCode);
 
 #endif
