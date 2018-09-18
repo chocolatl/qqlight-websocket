@@ -17,7 +17,7 @@ const char* PLUGIN_INFO =
     "pluginBrief="
         "Enable you to use QQLight API in any language you like via WebSocket.\r\n\r\n"
         "GitHub:\r\nhttps://github.com/Chocolatl/qqlight-websocket;\r\n"
-    "pluginVersion=0.2.0;\r\n"
+    "pluginVersion=0.3.0;\r\n"
     "pluginSDK=3;\r\n"
     "pluginAuthor=Chocolatl;\r\n"
     "pluginWindowsTitle=;"
