@@ -536,6 +536,54 @@ DllExport(int) Event_BecomeFriends(const char* qq) {
     return 0;
 }
 
+void handleGroupMemberChange(
+    int type, 
+    const char* group, 
+    const char* qq, 
+    const char* operator,
+    const char* event
+) {
+
+    cJSON* root = cJSON_CreateObject();
+    cJSON_AddItemToObject(root, "event", cJSON_CreateString(event));
+
+    cJSON* params = cJSON_CreateObject();
+    
+    cJSON_AddItemToObject(params, "type", cJSON_CreateNumber(type));
+    cJSON_AddItemToObject(params, "group", cJSON_CreateString(group));
+    cJSON_AddItemToObject(params, "qq", cJSON_CreateString(qq));
+    cJSON_AddItemToObject(params, "operator", cJSON_CreateString(operator));  // operator可能为NULL，这时该字段将不存在
+    
+    cJSON_AddItemToObject(root, "params", params);
+
+    const char* jsonStr = cJSON_PrintUnformatted(root);
+
+    wsFrameSendToAll(jsonStr, strlen(jsonStr), frameType_text);
+
+    cJSON_Delete(root);
+    free((void*)jsonStr);
+}
+
+DllExport(int) Event_GroupMemberIncrease(
+    int type,               // 1=主动加群、2=被管理员邀请
+    const char* group,      // 
+    const char* qq,         // 
+    const char* operator    // 操作者QQ
+) {
+    handleGroupMemberChange(type, group, qq, operator, "groupMemberIncrease");
+    return 0;
+}
+
+DllExport(int) Event_GroupMemberDecrease(
+    int type,               // 1=主动退群、2=被管理员踢出
+    const char* group,      // 
+    const char* qq,         // 
+    const char* operator    // 操作者QQ，仅在被管理员踢出时存在
+) {
+    handleGroupMemberChange(type, group, qq, operator, "groupMemberDecrease");  // 这里的operator可能为NULL
+    return 0;
+}
+
 BOOL APIENTRY DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved) {
     
     if(loadQQLightAPI() != 0) {

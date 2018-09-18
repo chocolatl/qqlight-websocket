@@ -102,7 +102,35 @@ ws.on('message', data => {
 {
     "event": "becomeFriends", 
     "params": {
-        "qq"      : ""
+        "qq": ""
+    }
+}
+```
+
+### 事件.群成员增加
+
+```js
+{
+    "event": "groupMemberIncrease", 
+    "params": {
+        "type"      : 1,        // 1=主动加群、2=被管理员邀请
+        "group"     : "",       //
+        "qq"        : "",       //
+        "operator"  : ""        // 操作者QQ
+    }
+}
+```
+
+### 事件.群成员减少
+
+```js
+{
+    "event": "groupMemberDecrease", 
+    "params": {
+        "type"      : 1,        // 1=主动退群、2=被管理员踢出
+        "group"     : "",       //
+        "qq"        : "",       //
+        "operator"  : ""        // 操作者QQ，仅在被管理员踢出时存在
     }
 }
 ```
