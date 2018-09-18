@@ -35,5 +35,6 @@ void __stdcall (*QL_setState)(int type, const char* authCode);
 void __stdcall (*QL_handleGroupRequest)(const char* group, const char* qq, const char* seq, int type, const char* message, const char* authCode);
 void __stdcall (*QL_kickGroupMember)(const char* group, const char* qq, bool permanent, const char* authCode);
 void __stdcall (*QL_silence)(const char* group, const char* qq, int duration, const char* authCode);
+void __stdcall (*QL_globalSilence)(const char* group, bool enable, const char* authCode);
 
 #endif

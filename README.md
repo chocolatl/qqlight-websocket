@@ -492,6 +492,20 @@ type为`2`时，我也没弄懂是什么情况
 
 无返回值
 
+### 接口.全体禁言
+
+```js
+{
+    "method": "globalSilence",
+    "params": {
+        "group"   : "",
+        "enable"  : true     // false为取消全体禁言
+    }
+}
+```
+
+无返回值
+
 ### 替换符.at
 
 在发送的群消息中使用`[QQ:at=xxx]`表示at某个群成员，其中`xxx`可以替换为任意群成员QQ

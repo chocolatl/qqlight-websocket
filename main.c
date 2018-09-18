@@ -118,6 +118,7 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET soc
     const cJSON* j_name     = cJSON_GetObjectItemCaseSensitive(j_params, "name");
     const cJSON* j_seq      = cJSON_GetObjectItemCaseSensitive(j_params, "seq");
     const cJSON* j_duration = cJSON_GetObjectItemCaseSensitive(j_params, "duration");
+    const cJSON* j_enable   = cJSON_GetObjectItemCaseSensitive(j_params, "enable");
 
     const cJSON_bool e_type     = cJSON_IsNumber(j_type);
     const cJSON_bool e_group    = cJSON_IsString(j_group);
@@ -130,6 +131,7 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET soc
     const cJSON_bool e_name     = cJSON_IsString(j_name);
     const cJSON_bool e_seq      = cJSON_IsString(j_seq);
     const cJSON_bool e_duration = cJSON_IsNumber(j_duration);
+    const cJSON_bool e_enable   = cJSON_IsBool(j_enable);
 
     int         v_type     = e_type     ?  j_type->valueint        :  -1;
     const char* v_group    = e_group    ?  j_group->valuestring    :  NULL;
@@ -142,6 +144,7 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET soc
     const char* v_name     = e_name     ?  j_name->valuestring     :  NULL;
     const char* v_seq      = e_seq      ?  j_seq->valuestring      :  NULL;
     int         v_duration = e_duration ?  j_duration->valueint    :  -1;
+    bool        v_enable   = e_enable   ?  cJSON_IsTrue(j_enable)  : false;
  
     pluginLog("jsonRPC", "Client call '%s' method", v_method);
 
@@ -437,6 +440,12 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET soc
         PARAMS_CHECK(e_group && e_qq && e_duration);
 
         QL_silence(v_group, v_qq, v_duration, authCode);
+
+    } else if (METHOD_IS("globalSilence")) {
+
+        PARAMS_CHECK(e_group && e_enable);
+
+        QL_globalSilence(v_group, v_enable, authCode);
 
     } else {
         pluginLog("jsonRPC", "Unknown method '%s'", v_method);

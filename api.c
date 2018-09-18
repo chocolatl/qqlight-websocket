@@ -45,6 +45,7 @@ int loadQQLightAPI(void) {
     GET_DLL_FUNC(QL_handleGroupRequest, "Api_SetGroupAdd");
     GET_DLL_FUNC(QL_kickGroupMember, "Api_RemoveMember");
     GET_DLL_FUNC(QL_silence, "Api_Ban");
+    GET_DLL_FUNC(QL_globalSilence, "Api_BanGroup");
 
     isLoaded = true;
     return 0;
