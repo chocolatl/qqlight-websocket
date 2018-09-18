@@ -401,7 +401,7 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET soc
         if(e_message) {
             const char* message = UTF8ToGBK(v_message);
             QL_handleFriendRequest(v_qq, v_type, message, authCode);
-            free(message);
+            free((void*)message);
         } else {
             QL_handleFriendRequest(v_qq, v_type, "", authCode);
         }
