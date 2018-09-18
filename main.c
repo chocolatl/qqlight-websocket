@@ -474,6 +474,30 @@ DllExport(int) Event_GetNewMsg (
     return 0;    // 返回0下个插件继续处理该事件，返回1拦截此事件不让其他插件执行
 }
 
+DllExport(int) Event_AddFrinend(const char* qq, const char* message) {
+
+    const char* u8Message = GBKToUTF8(message);
+
+    cJSON* root = cJSON_CreateObject();
+    cJSON_AddItemToObject(root, "event", cJSON_CreateString("friendRequest"));
+
+    cJSON* params = cJSON_CreateObject();
+    cJSON_AddItemToObject(params, "qq", cJSON_CreateString(qq));
+    cJSON_AddItemToObject(params, "message", cJSON_CreateString(u8Message));
+
+    cJSON_AddItemToObject(root, "params", params);
+
+    const char* jsonStr = cJSON_PrintUnformatted(root);
+
+    wsFrameSendToAll(jsonStr, strlen(jsonStr), frameType_text);
+
+    cJSON_Delete(root);
+    free((void*)u8Message);
+    free((void*)jsonStr);
+
+    return 0;
+}
+
 BOOL APIENTRY DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved) {
     
     if(loadQQLightAPI() != 0) {

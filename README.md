@@ -82,6 +82,18 @@ ws.on('message', data => {
 }
 ```
 
+### 事件.收到好友请求
+
+```js
+{
+    "event": "friendRequest", 
+    "params": {
+        "qq"      : "",
+        "message" : ""      // 验证消息
+    }
+}
+```
+
 ### 接口.发送消息
 
 ```js
