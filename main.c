@@ -622,6 +622,42 @@ DllExport(int) Event_AdminChange(
     return 0;
 }
 
+DllExport(int) Event_AddGroup(
+    int type,               // 1=主动加群、2=某人被邀请进群、3=机器人被邀请进群
+    const char* group,      //
+    const char* qq,         //
+    const char* operator,   // 邀请者QQ，主动加群时不存在
+    const char* message,    // 加群附加消息，只有主动加群时存在
+    const char* seq         // seq，同意加群时需要用到
+) {
+
+    cJSON* root = cJSON_CreateObject();
+    cJSON_AddItemToObject(root, "event", cJSON_CreateString("groupRequest"));
+
+    cJSON* params = cJSON_CreateObject();
+
+    const char* u8Message = GBKToUTF8(message ? message : "");
+    
+    cJSON_AddItemToObject(params, "type", cJSON_CreateNumber(type));
+    cJSON_AddItemToObject(params, "group", cJSON_CreateString(group));
+    cJSON_AddItemToObject(params, "qq", cJSON_CreateString(qq));
+    cJSON_AddItemToObject(params, "operator", cJSON_CreateString(operator));
+    cJSON_AddItemToObject(params, "message", cJSON_CreateString(u8Message));
+    cJSON_AddItemToObject(params, "seq", cJSON_CreateString(seq));
+    
+    cJSON_AddItemToObject(root, "params", params);
+
+    const char* jsonStr = cJSON_PrintUnformatted(root);
+
+    wsFrameSendToAll(jsonStr, strlen(jsonStr), frameType_text);
+
+    cJSON_Delete(root);
+    free((void*)u8Message);
+    free((void*)jsonStr);
+
+    return 0;
+}
+
 BOOL APIENTRY DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved) {
     
     if(loadQQLightAPI() != 0) {
