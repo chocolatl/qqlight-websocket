@@ -116,6 +116,7 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET soc
     const cJSON* j_object  = cJSON_GetObjectItemCaseSensitive(j_params, "object");
     const cJSON* j_data    = cJSON_GetObjectItemCaseSensitive(j_params, "data");
     const cJSON* j_name    = cJSON_GetObjectItemCaseSensitive(j_params, "name");
+    const cJSON* j_seq     = cJSON_GetObjectItemCaseSensitive(j_params, "seq");
 
     const cJSON_bool e_type    = cJSON_IsNumber(j_type);
     const cJSON_bool e_group   = cJSON_IsString(j_group);
@@ -126,6 +127,7 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET soc
     const cJSON_bool e_object  = cJSON_IsString(j_object);
     const cJSON_bool e_data    = cJSON_IsString(j_data);
     const cJSON_bool e_name    = cJSON_IsString(j_name);
+    const cJSON_bool e_seq     = cJSON_IsString(j_seq);
 
     int         v_type    = e_type    ?  j_type->valueint        :  -1;
     const char* v_group   = e_group   ?  j_group->valuestring    :  NULL;
@@ -136,6 +138,7 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET soc
     const char* v_object  = e_object  ?  j_object->valuestring   :  NULL;
     const char* v_data    = e_data    ?  j_data->valuestring     :  NULL;
     const char* v_name    = e_name    ?  j_name->valuestring     :  NULL;
+    const char* v_seq     = e_seq     ?  j_seq->valuestring      :  NULL;
  
     pluginLog("jsonRPC", "Client call '%s' method", v_method);
 
@@ -411,6 +414,14 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET soc
         PARAMS_CHECK(e_type);
 
         QL_setState(v_type, authCode);
+
+    } else if (METHOD_IS("handleGroupRequest")) {
+
+        PARAMS_CHECK(e_group && e_qq && e_seq && e_type);
+
+        const char* message = e_message ? v_message : "";
+
+        QL_handleGroupRequest(v_group, v_qq, v_seq, v_type, message, authCode);
 
     } else {
         pluginLog("jsonRPC", "Unknown method '%s'", v_method);

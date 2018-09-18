@@ -424,6 +424,23 @@ ws.on('message', data => {
 
 无返回值
 
+### 接口.处理加群请求
+
+```js
+{
+    "method": "handleGroupRequest",
+    "params": {
+        "group"     : "",
+        "qq"        : "",
+        "seq"       : "",
+        "type"      : 1,    // 1=同意、2=拒绝、3=忽略
+        "message"   : ""    // 拒绝时的拒绝理由，其它情况忽略
+    }
+}
+```
+
+无返回值
+
 ### 替换符.at
 
 在发送的群消息中使用`[QQ:at=xxx]`表示at某个群成员，其中`xxx`可以替换为任意群成员QQ
