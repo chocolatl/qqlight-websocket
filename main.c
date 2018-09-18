@@ -423,6 +423,12 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET soc
 
         QL_handleGroupRequest(v_group, v_qq, v_seq, v_type, message, authCode);
 
+    } else if (METHOD_IS("kickGroupMember")) {
+
+        PARAMS_CHECK(e_group && e_qq);
+
+        QL_kickGroupMember(v_group, v_qq, false, authCode);
+
     } else {
         pluginLog("jsonRPC", "Unknown method '%s'", v_method);
     }
