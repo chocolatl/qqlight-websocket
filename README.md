@@ -94,6 +94,8 @@ ws.on('message', data => {
 }
 ```
 
+收到该事件时可以通过调用[接口.处理好友请求](#接口处理好友请求)处理
+
 ### 接口.发送消息
 
 ```js
@@ -336,6 +338,21 @@ ws.on('message', data => {
     "method": "givePraise",
     "params": {
         "qq": ""
+    }
+}
+```
+
+无返回值
+
+### 接口.处理好友请求
+
+```js
+{
+    "method": "handleFriendRequest",
+    "params": {
+        "qq": "",
+        "type": 1,      // 1=同意、2=拒绝、3=忽略
+        "message": ""   // 拒绝理由，仅在拒绝请求时有效
     }
 }
 ```

@@ -394,6 +394,18 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET soc
 
         QL_givePraise(v_qq, authCode);
 
+    } else if (METHOD_IS("handleFriendRequest")) {
+
+        PARAMS_CHECK(e_qq && e_type);
+
+        if(e_message) {
+            const char* message = UTF8ToGBK(v_message);
+            QL_handleFriendRequest(v_qq, v_type, message, authCode);
+            free(message);
+        } else {
+            QL_handleFriendRequest(v_qq, v_type, "", authCode);
+        }
+
     } else {
         pluginLog("jsonRPC", "Unknown method '%s'", v_method);
     }

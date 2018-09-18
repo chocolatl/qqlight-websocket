@@ -40,6 +40,7 @@ int loadQQLightAPI(void) {
     GET_DLL_FUNC(QL_getNickname, "Api_GetNick");
     GET_DLL_FUNC(QL_getPraiseCount, "Api_GetPraiseNum");
     GET_DLL_FUNC(QL_givePraise, "Api_SendPraise");
+    GET_DLL_FUNC(QL_handleFriendRequest, "Api_SetFriendAdd");
 
     isLoaded = true;
     return 0;
