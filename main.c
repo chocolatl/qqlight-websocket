@@ -530,6 +530,7 @@ DllExport(int) Event_BecomeFriends(const char* qq) {
 
     wsFrameSendToAll(jsonStr, strlen(jsonStr), frameType_text);
 
+    cJSON_Delete(root);
     free((void*)jsonStr);
 
     return 0;
