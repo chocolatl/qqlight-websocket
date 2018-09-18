@@ -107,40 +107,40 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET soc
     }
 
     // 参数字段
-    const cJSON* j_type    = cJSON_GetObjectItemCaseSensitive(j_params, "type");        // 即使j_params为NULL也是安全的，返回的结果也是NULL
-    const cJSON* j_group   = cJSON_GetObjectItemCaseSensitive(j_params, "group");
-    const cJSON* j_qq      = cJSON_GetObjectItemCaseSensitive(j_params, "qq");
-    const cJSON* j_content = cJSON_GetObjectItemCaseSensitive(j_params, "content");
-    const cJSON* j_msgid   = cJSON_GetObjectItemCaseSensitive(j_params, "msgid");
-    const cJSON* j_message = cJSON_GetObjectItemCaseSensitive(j_params, "message");
-    const cJSON* j_object  = cJSON_GetObjectItemCaseSensitive(j_params, "object");
-    const cJSON* j_data    = cJSON_GetObjectItemCaseSensitive(j_params, "data");
-    const cJSON* j_name    = cJSON_GetObjectItemCaseSensitive(j_params, "name");
-    const cJSON* j_seq     = cJSON_GetObjectItemCaseSensitive(j_params, "seq");
+    const cJSON* j_type     = cJSON_GetObjectItemCaseSensitive(j_params, "type");        // 即使j_params为NULL也是安全的，返回的结果也是NULL
+    const cJSON* j_group    = cJSON_GetObjectItemCaseSensitive(j_params, "group");
+    const cJSON* j_qq       = cJSON_GetObjectItemCaseSensitive(j_params, "qq");
+    const cJSON* j_content  = cJSON_GetObjectItemCaseSensitive(j_params, "content");
+    const cJSON* j_msgid    = cJSON_GetObjectItemCaseSensitive(j_params, "msgid");
+    const cJSON* j_message  = cJSON_GetObjectItemCaseSensitive(j_params, "message");
+    const cJSON* j_object   = cJSON_GetObjectItemCaseSensitive(j_params, "object");
+    const cJSON* j_data     = cJSON_GetObjectItemCaseSensitive(j_params, "data");
+    const cJSON* j_name     = cJSON_GetObjectItemCaseSensitive(j_params, "name");
+    const cJSON* j_seq      = cJSON_GetObjectItemCaseSensitive(j_params, "seq");
     const cJSON* j_duration = cJSON_GetObjectItemCaseSensitive(j_params, "duration");
 
-    const cJSON_bool e_type    = cJSON_IsNumber(j_type);
-    const cJSON_bool e_group   = cJSON_IsString(j_group);
-    const cJSON_bool e_qq      = cJSON_IsString(j_qq);
-    const cJSON_bool e_content = cJSON_IsString(j_content);
-    const cJSON_bool e_msgid   = cJSON_IsString(j_msgid);
-    const cJSON_bool e_message = cJSON_IsString(j_message);
-    const cJSON_bool e_object  = cJSON_IsString(j_object);
-    const cJSON_bool e_data    = cJSON_IsString(j_data);
-    const cJSON_bool e_name    = cJSON_IsString(j_name);
-    const cJSON_bool e_seq     = cJSON_IsString(j_seq);
+    const cJSON_bool e_type     = cJSON_IsNumber(j_type);
+    const cJSON_bool e_group    = cJSON_IsString(j_group);
+    const cJSON_bool e_qq       = cJSON_IsString(j_qq);
+    const cJSON_bool e_content  = cJSON_IsString(j_content);
+    const cJSON_bool e_msgid    = cJSON_IsString(j_msgid);
+    const cJSON_bool e_message  = cJSON_IsString(j_message);
+    const cJSON_bool e_object   = cJSON_IsString(j_object);
+    const cJSON_bool e_data     = cJSON_IsString(j_data);
+    const cJSON_bool e_name     = cJSON_IsString(j_name);
+    const cJSON_bool e_seq      = cJSON_IsString(j_seq);
     const cJSON_bool e_duration = cJSON_IsNumber(j_duration);
 
-    int         v_type    = e_type    ?  j_type->valueint        :  -1;
-    const char* v_group   = e_group   ?  j_group->valuestring    :  NULL;
-    const char* v_qq      = e_qq      ?  j_qq->valuestring       :  NULL;
-    const char* v_content = e_content ?  j_content->valuestring  :  NULL;
-    const char* v_msgid   = e_msgid   ?  j_msgid->valuestring    :  NULL;
-    const char* v_message = e_message ?  j_message->valuestring  :  NULL;
-    const char* v_object  = e_object  ?  j_object->valuestring   :  NULL;
-    const char* v_data    = e_data    ?  j_data->valuestring     :  NULL;
-    const char* v_name    = e_name    ?  j_name->valuestring     :  NULL;
-    const char* v_seq     = e_seq     ?  j_seq->valuestring      :  NULL;
+    int         v_type     = e_type     ?  j_type->valueint        :  -1;
+    const char* v_group    = e_group    ?  j_group->valuestring    :  NULL;
+    const char* v_qq       = e_qq       ?  j_qq->valuestring       :  NULL;
+    const char* v_content  = e_content  ?  j_content->valuestring  :  NULL;
+    const char* v_msgid    = e_msgid    ?  j_msgid->valuestring    :  NULL;
+    const char* v_message  = e_message  ?  j_message->valuestring  :  NULL;
+    const char* v_object   = e_object   ?  j_object->valuestring   :  NULL;
+    const char* v_data     = e_data     ?  j_data->valuestring     :  NULL;
+    const char* v_name     = e_name     ?  j_name->valuestring     :  NULL;
+    const char* v_seq      = e_seq      ?  j_seq->valuestring      :  NULL;
     int         v_duration = e_duration ?  j_duration->valueint    :  -1;
  
     pluginLog("jsonRPC", "Client call '%s' method", v_method);
