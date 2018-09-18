@@ -516,6 +516,25 @@ DllExport(int) Event_AddFrinend(const char* qq, const char* message) {
     return 0;
 }
 
+DllExport(int) Event_BecomeFriends(const char* qq) {
+
+    cJSON* root = cJSON_CreateObject();
+    cJSON_AddItemToObject(root, "event", cJSON_CreateString("becomeFriends"));
+
+    cJSON* params = cJSON_CreateObject();
+    cJSON_AddItemToObject(params, "qq", cJSON_CreateString(qq));
+
+    cJSON_AddItemToObject(root, "params", params);
+
+    const char* jsonStr = cJSON_PrintUnformatted(root);
+
+    wsFrameSendToAll(jsonStr, strlen(jsonStr), frameType_text);
+
+    free((void*)jsonStr);
+
+    return 0;
+}
+
 BOOL APIENTRY DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved) {
     
     if(loadQQLightAPI() != 0) {
