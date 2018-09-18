@@ -584,6 +584,33 @@ DllExport(int) Event_GroupMemberDecrease(
     return 0;
 }
 
+DllExport(int) Event_AdminChange(
+    int type,               // 1=成为管理 2=被解除管理
+    const char* group,
+    const char* qq
+) {
+
+    cJSON* root = cJSON_CreateObject();
+    cJSON_AddItemToObject(root, "event", cJSON_CreateString("adminChange"));
+
+    cJSON* params = cJSON_CreateObject();
+    
+    cJSON_AddItemToObject(params, "type", cJSON_CreateNumber(type));
+    cJSON_AddItemToObject(params, "group", cJSON_CreateString(group));
+    cJSON_AddItemToObject(params, "qq", cJSON_CreateString(qq));
+    
+    cJSON_AddItemToObject(root, "params", params);
+
+    const char* jsonStr = cJSON_PrintUnformatted(root);
+
+    wsFrameSendToAll(jsonStr, strlen(jsonStr), frameType_text);
+
+    cJSON_Delete(root);
+    free((void*)jsonStr);
+
+    return 0;
+}
+
 BOOL APIENTRY DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved) {
     
     if(loadQQLightAPI() != 0) {
