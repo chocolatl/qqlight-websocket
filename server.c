@@ -262,7 +262,7 @@ void receiveConnect(void) {
             
         int errCode = WSAGetLastError();
         
-        // serverSocket不是一个套接字，即serverSocket已经执行了closesocket 
+        // serverSocket不是一个套接字，即已经调用了serverStop，执行了closesocket(serverSocket)
         if(errCode == WSAENOTSOCK) {
             
             pluginLog("receiveConnect", "Closing all client sockets...");
