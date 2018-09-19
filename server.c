@@ -252,34 +252,35 @@ void receiveConnect(void) {
         return;
     }
     
-    if(clientSocket == INVALID_SOCKET) {
-            
-        int errCode = WSAGetLastError();
-        
-        // serverSocket不是一个套接字，即已经调用了serverStop，执行了closesocket(serverSocket)
-        if(errCode == WSAENOTSOCK) {
-            
-            pluginLog("receiveConnect", "Closing all client sockets...");
+    if(clientSocket != INVALID_SOCKET) {
 
-            // 关闭所有客户端连接 
-            for(int i = 0; i < clientSockets.total; i++) {
-                closesocket(clientSockets.clients[i].socket);       
-            }
-            clientSockets.total = 0;
-            
-            pluginLog("receiveConnect", "Threads will exit");
-            ExitThread(0);     // 退出 
-        }
+        pluginLog("receiveConnect", "Accepted client: %s:%d", inet_ntoa(client.sin_addr), ntohs(client.sin_port));
         
-        pluginLog("receiveConnect", "Accept failed: %d", WSAGetLastError());
+        clientSockets.clients[clientSockets.total].socket = clientSocket;
+        clientSockets.clients[clientSockets.total].protocol = socketProtocol;
+        clientSockets.total++;
+
         return;
     }
+
+    int errCode = WSAGetLastError();
     
-    pluginLog("receiveConnect", "Accepted client: %s:%d", inet_ntoa(client.sin_addr), ntohs(client.sin_port));
+    // serverSocket不是一个套接字，即已经调用了serverStop，执行了closesocket(serverSocket)
+    if(errCode == WSAENOTSOCK) {
+        
+        pluginLog("receiveConnect", "Closing all client sockets...");
+
+        // 关闭所有客户端连接 
+        for(int i = 0; i < clientSockets.total; i++) {
+            closesocket(clientSockets.clients[i].socket);       
+        }
+        clientSockets.total = 0;
+        
+        pluginLog("receiveConnect", "Threads will exit");
+        ExitThread(0);     // 退出 
+    }
     
-    clientSockets.clients[clientSockets.total].socket = clientSocket;
-    clientSockets.clients[clientSockets.total].protocol = socketProtocol;
-    clientSockets.total++;
+    pluginLog("receiveConnect", "Accept failed: %d", errCode);
 }
 
 int serverStart(void) {
