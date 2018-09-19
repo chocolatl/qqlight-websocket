@@ -158,6 +158,8 @@ void removeClient(int pos) {
     pluginLog("removeClient", "Client socket closed, now length of clients: %d", clientSockets.total);
 }
 
+void receiveConnect(void);
+
 void receiveComingData(void) {
 
     #define RECV_BUFLEN 40960
@@ -172,6 +174,7 @@ void receiveComingData(void) {
     receivingDataLoop:
         
     FD_ZERO(&fdread); 
+    FD_SET(serverSocket, &fdread);
     for(int i = 0; i < clientSockets.total; i++) {     
         FD_SET(clientSockets.clients[i].socket, &fdread);   
     }
@@ -186,6 +189,10 @@ void receiveComingData(void) {
     // 所以客户端数为0时会产生无停顿的循环，占满CPU，这里通过Sleep放弃时间片占用 
     if(ret == SOCKET_ERROR && WSAGetLastError() == WSAEINVAL) {
         Sleep(1); 
+    }
+
+    if(FD_ISSET(serverSocket, &fdread)) {
+        receiveConnect();
     }
     
     for(int i = 0; i < clientSockets.total; i++) {
@@ -239,22 +246,16 @@ void receiveComingData(void) {
 
 void receiveConnect(void) {
     
-    DWORD   dwThreadId;
     SOCKET  clientSocket;
-    
-    HANDLE hHandle = CreateThread(NULL, 0, (void*)receiveComingData, NULL, 0, &dwThreadId);
-    
     SOCKADDR_IN client; 
     
-    receivingConnectLoop:
-
     // Accept a connection   
-    clientSocket = accept(serverSocket, (struct sockaddr *)&client, NULL);   
+    clientSocket = accept(serverSocket, (struct sockaddr*)&client, NULL);   
 
     // 当连接数达到上限时拒绝连接
     if(clientSockets.total >= MAX_CLIENT_NUM) {
         closesocket(clientSocket);
-        goto receivingConnectLoop;
+        return;
     }
     
     if(clientSocket == INVALID_SOCKET) {
@@ -263,8 +264,6 @@ void receiveConnect(void) {
         
         // serverSocket不是一个套接字，即serverSocket已经执行了closesocket 
         if(errCode == WSAENOTSOCK) {
-            pluginLog("receiveConnect", "Threads will exit");
-            TerminateThread(hHandle, 0);        // 粗暴的终止receiveComingData线程 
             
             pluginLog("receiveConnect", "Closing all client sockets...");
 
@@ -274,11 +273,12 @@ void receiveConnect(void) {
             }
             clientSockets.total = 0;
             
+            pluginLog("receiveConnect", "Threads will exit");
             ExitThread(0);     // 退出 
         }
         
         pluginLog("receiveConnect", "Accept failed: %d", WSAGetLastError());
-        goto receivingConnectLoop;
+        return;
     }
     
     pluginLog("receiveConnect", "Accepted client: %s:%d", inet_ntoa(client.sin_addr), ntohs(client.sin_port));
@@ -286,8 +286,6 @@ void receiveConnect(void) {
     clientSockets.clients[clientSockets.total].socket = clientSocket;
     clientSockets.clients[clientSockets.total].protocol = socketProtocol;
     clientSockets.total++;
-
-    goto receivingConnectLoop;
 }
 
 int serverStart(void) {
@@ -333,7 +331,7 @@ int serverStart(void) {
     clientSockets.total = 0;
     
     DWORD dwThreadId;
-    HANDLE hHandle = CreateThread(NULL, 0, (void*)receiveConnect, NULL, 0, &dwThreadId);
+    HANDLE hHandle = CreateThread(NULL, 0, (void*)receiveComingData, NULL, 0, &dwThreadId);
     
     return 0;
 }
