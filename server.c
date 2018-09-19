@@ -145,10 +145,9 @@ void removeClient(int pos) {
 
     if(pos < clientSockets.total - 1) {      // 该socket不处于数组末尾 
         // 将数组末尾的socket填到当前位置 
-        clientSockets.clients[pos] = clientSockets.clients[--clientSockets.total];
-    } else {
-        clientSockets.total--;
+        clientSockets.clients[pos] = clientSockets.clients[clientSockets.total - 1];
     }
+    clientSockets.total--;
 
     struct linger so_linger;
     so_linger.l_onoff = 1;
