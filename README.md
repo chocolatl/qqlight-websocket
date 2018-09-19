@@ -3,7 +3,7 @@
 [![version](https://img.shields.io/badge/version-0.3.0-green.svg?colorB=blue)](https://github.com/Chocolatl/qqlight-websocket/releases)
 [![license](https://img.shields.io/badge/license-GLWT-green.svg)](https://github.com/Chocolatl/qqlight-websocket/blob/master/LICENSE)
 
-[QQLight机器人](http://www.52chat.cc/)（原Amanda QQ）接口的WebSocket协议插件
+[QQLight机器人](http://www.52chat.cc/)（原Amanda QQ）框架的WebSocket-RPC插件
 
 插件通过WebSocket与JSON实现远程过程调用，让你能使用任何喜欢的语言编写QQ机器人程序
 
@@ -22,9 +22,8 @@
 ```js
 var ws = new WebSocket('ws://localhost:49632/');
 ws.onmessage = function(ev) {
-    var data = JSON.parse(ev.data);
+    var data   = JSON.parse(ev.data);
     var params = data.params;
-    console.log(data);
     if(data.event === 'message') {
         var rpc = {
             method: "sendMessage",
@@ -62,11 +61,9 @@ ws.on('message', data => {
 
 远程调用采用类似JSON-RPC的数据格式，服务端与客户端发送的消息都**必须**是顶层结构为对象的JSON格式文本，编码**必须**为UTF-8
 
-如果调用的接口会返回数据，那么**必须**携带字符串类型的`id`字段，且每次调用都应该使用不同的`id`值，服务器返回结果会携带与调用时相同的`id`
+如果调用的接口会返回数据，那么调用请求**必须**携带字符串类型的`id`字段，且每次调用请求都应该使用不同的`id`，服务器返回结果会包含与调用时相同的`id`
 
-为什么需要`id`？
-
-对于网络I/O环境下，发送和接收通常不是一个同步的过程，发送数据未必按序到达，不同的`id`能帮助你辨别返回的数据属于哪次调用
+`id`是必须的，因为对于网络I/O环境下，发送和接收通常不是一个同步的过程，收发的消息未必按序到达，不同的`id`能帮助你辨别返回的数据属于哪次调用
 
 ### 事件.收到消息
 
