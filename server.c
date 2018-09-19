@@ -184,12 +184,6 @@ void receiveComingData(void) {
     if(ret == 0) {
         goto receivingDataLoop;     // select的等待时间到达，开始下一轮等待 
     }
-    
-    // 当客户端数为0时select的等待时间设置将不会生效，立即返回WSAEINVAL错误
-    // 所以客户端数为0时会产生无停顿的循环，占满CPU，这里通过Sleep放弃时间片占用 
-    if(ret == SOCKET_ERROR && WSAGetLastError() == WSAEINVAL) {
-        Sleep(1); 
-    }
 
     if(FD_ISSET(serverSocket, &fdread)) {
         receiveConnect();
