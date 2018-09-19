@@ -140,6 +140,9 @@ int wsClientDataHandle(const char* recvBuff, int recvLen, Client* client) {
 // 如果被移除的客户不在数组末尾，数组末尾的客户会移动到被移除的客户所在位置
 // 所以如果调用该函数时正在遍历客户数组，记得回退遍历位置
 void removeClient(int pos) {
+
+    SOCKET socket = clientSockets.clients[pos].socket;  // 保存需要被关闭的socket
+
     if(pos < clientSockets.total - 1) {      // 该socket不处于数组末尾 
         // 将数组末尾的socket填到当前位置 
         clientSockets.clients[pos] = clientSockets.clients[--clientSockets.total];
@@ -150,7 +153,6 @@ void removeClient(int pos) {
     struct linger so_linger;
     so_linger.l_onoff = 1;
     so_linger.l_linger = 1;
-    SOCKET socket = clientSockets.clients[pos].socket;
     setsockopt(socket, SOL_SOCKET, SO_LINGER, (const char*)&so_linger, sizeof(so_linger));
     closesocket(socket);
 
