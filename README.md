@@ -1,16 +1,17 @@
-# QQLight-WebSocket
+[![stars](https://img.shields.io/github/stars/Chocolatl/qqlight-websocket.svg?colorB=red)](https://github.com/Chocolatl/qqlight-websocket/stargazers)
+[![releases](https://img.shields.io/github/downloads/Chocolatl/qqlight-websocket/total.svg?colorB=green)](https://github.com/Chocolatl/qqlight-websocket/releases)
+[![version](https://img.shields.io/badge/version-0.3.0-green.svg?colorB=blue)](https://github.com/Chocolatl/qqlight-websocket/releases)
+[![license](https://img.shields.io/badge/license-GLWT-green.svg)](https://github.com/Chocolatl/qqlight-websocket/blob/master/LICENSE)
 
-QQLight机器人（原Amanda QQ）接口的WebSocket协议实现
+[QQLight机器人](http://www.52chat.cc/)（原Amanda QQ）接口的WebSocket协议插件
 
-让你能通过WebSocket协议使用任何喜欢的语言使用QQLight接口编写QQ机器人程序
+插件通过WebSocket与JSON实现远程过程调用，让你能使用任何喜欢的语言编写QQ机器人程序
 
-## 使用
+## 使用方法
 
-插件启动后监听`49632`端口，在本机可以使用WebSocket协议通过URL`ws://localhost:49632/`连接
+将插件复制到QQLight机器人框架的`plugin`目录中，运行QQLight机器人并在插件管理中启用插件
 
-当新`事件`发生，插件服务器会主动推送到所有已连接的客户端，服务器推送的事件列表可查看API文档中列出的`事件`
-
-连接建立后，可以随时发送支持的`接口`消息给服务器，实现发送QQ消息等功能，接口列表可查看API文档中列出的`接口`
+插件启动后默认监听`49632`端口，在本机可以使用WebSocket客户端通过URL`ws://localhost:49632/`连接服务器
 
 ## 示例
 
