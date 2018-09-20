@@ -29,6 +29,7 @@ static struct {
 static SOCKET serverSocket;
 
 // 将数据转换成WebSocket帧并发送
+// 需要调用者自己确保socket已完成WebSocket握手
 int wsFrameSend(SOCKET socket, const char* buff, int len, FrameType type) {
 
     int newLen;
@@ -48,10 +49,13 @@ int wsFrameSend(SOCKET socket, const char* buff, int len, FrameType type) {
     return iSendResult;
 }
 
+// 将数据转换为WebSocket帧并发送给所有已完成WebSocket握手的客户端
 void wsFrameSendToAll(const char* buff, int len,  FrameType type) {
     for(int i = 0; i < clientSockets.total; i++) {
-        pluginLog("wsFrameSendToAll", "Send data to %dst client", i);
-        wsFrameSend(clientSockets.clients[i].socket, buff, len, type);
+        if(clientSockets.clients[i].protocol == websocketProtocol) {
+            pluginLog("wsFrameSendToAll", "Send data to %dst client", i);
+            wsFrameSend(clientSockets.clients[i].socket, buff, len, type);
+        }
     }
 }
 
