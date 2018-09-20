@@ -205,7 +205,7 @@ void receiveConnect(void) {
 
 void receiveComingData(void) {
 
-    #define RECV_BUFLEN 40960
+    #define RECV_BUFLEN 0X40000
 
     unsigned char recvbuf[RECV_BUFLEN];
     int iResult;
