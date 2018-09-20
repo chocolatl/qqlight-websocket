@@ -207,7 +207,7 @@ void receiveComingData(void) {
 
     #define RECV_BUFLEN 0X40000
 
-    unsigned char recvbuf[RECV_BUFLEN];
+    char recvbuf[RECV_BUFLEN];
     int iResult;
 
     int ret; 
