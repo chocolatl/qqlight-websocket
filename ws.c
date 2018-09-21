@@ -374,7 +374,7 @@ int getSecWebSocketAcceptKey(const char* key, char* b64buff, int len) {
 }
 
 // 处理HTTP协议升级为WebSocket协议的握手请求，握手成功返回0，失败返回-1
-int wsShakeHands(const char* recvBuff, int recvLen, SOCKET socket) {
+int wsShakeHands(const char* recvBuff, int recvLen, SOCKET socket, const char* path) {
 
     #define HTTP_MAXLEN 1536
     #define HTTP_400 "HTTP/1.1 400 Bad Request\r\n\r\n"
@@ -394,8 +394,11 @@ int wsShakeHands(const char* recvBuff, int recvLen, SOCKET socket) {
 
     const char *keyPos, *keyPosEnd;
 
+    const char requestLine[512];
+    sprintf(requestLine, "GET %s%s HTTP/1.1\r\n", (strlen(path) == 0 || path[0] != '/') ? "/" : "", path);
+
     if(
-        strstr(recvBuff, "GET / HTTP/1.1\r\n") != recvBuff  ||
+        strstr(recvBuff, requestLine) != recvBuff           ||
         !strstr(recvBuff, "Connection: ")                   ||
         !strstr(recvBuff, "Upgrade: websocket")             ||
         !strstr(recvBuff, "Sec-WebSocket-Version: 13")      ||

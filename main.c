@@ -29,8 +29,10 @@ char pluginPath[1024];
 
 struct {
     u_short port;
+    char path[256];
 } config = {
-    port: 49632
+    port: 49632,
+    path: "/"
 };
 
 void pluginLog(const char* type, const char* format, ...) {
@@ -482,6 +484,7 @@ void createConfigFile(void) {
         
         cJSON* root = cJSON_CreateObject();
         cJSON_AddItemToObject(root, "port", cJSON_CreateNumber(config.port));
+        cJSON_AddItemToObject(root, "path", cJSON_CreateString(config.path));
 
         const char* json = cJSON_Print(root);
         fwrite(json, strlen(json), 1, fp);
@@ -527,9 +530,15 @@ void readConfigFile(void) {
     }
 
     cJSON* j_port = cJSON_GetObjectItem(json, "port");
+    cJSON* j_path = cJSON_GetObjectItem(json, "path");
     
     if(cJSON_IsNumber(j_port)) {
         config.port = (u_short)j_port->valueint;
+    }
+
+    if(cJSON_IsString(j_path)) {
+        strncpy(config.path, j_path->valuestring, sizeof(config.path) - 1);
+        config.path[sizeof(config.path) - 1] = '\0';
     }
 
     cJSON_Delete(json);
@@ -566,7 +575,7 @@ DllExport(int) Event_Initialization(void) {
 
 DllExport(int) Event_pluginStart(void) {
     
-    int result = serverStart(config.port);
+    int result = serverStart(config.port, config.path);
     
     if(result != 0) {
         pluginLog("Event_pluginStart", "WebSocket server startup failed");

@@ -46,6 +46,6 @@ void initWsFrameStruct(WsFrame* wsFrame);
 char* convertToWebSocketFrame(const char* data, FrameType type, size_t len, size_t* newLen);
 int readWebSocketFrameStream(WsFrame* wsFrame, const char* buff, int len);
 void freeWebSocketFrame(WsFrame* wsFrame);
-int wsShakeHands(const char* recvBuff, int recvLen, SOCKET socket);
+int wsShakeHands(const char* recvBuff, int recvLen, SOCKET socket, const char* path);
 
 #endif

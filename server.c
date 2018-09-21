@@ -207,7 +207,7 @@ void receiveConnect(void) {
     pluginLog("receiveConnect", "Accept failed: %d", errCode);
 }
 
-void receiveComingData(void) {
+void receiveComingData(const char* path) {
 
     #define RECV_BUFLEN 0X40000
 
@@ -252,7 +252,7 @@ void receiveComingData(void) {
             
             // 协议升级
             if(client->protocol == socketProtocol) {
-                int result = wsShakeHands(recvbuf, iResult, client->socket);
+                int result = wsShakeHands(recvbuf, iResult, client->socket, path);
                 if(result != 0) {
                     removeClient(i--);
                 } else {
@@ -285,7 +285,7 @@ void receiveComingData(void) {
     goto receivingDataLoop;
 }
 
-int serverStart(u_short port) {
+int serverStart(u_short port, const char* path) {
 
     WSADATA wsaData;
     
@@ -327,7 +327,7 @@ int serverStart(u_short port) {
     clientSockets.total = 0;
     
     DWORD dwThreadId;
-    HANDLE hHandle = CreateThread(NULL, 0, (void*)receiveComingData, NULL, 0, &dwThreadId);
+    HANDLE hHandle = CreateThread(NULL, 0, (void*)receiveComingData, path, 0, &dwThreadId);
     
     return 0;
 }
