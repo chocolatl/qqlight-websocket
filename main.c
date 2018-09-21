@@ -567,14 +567,14 @@ DllExport(int) Event_Initialization(void) {
 
     pluginLog("Event_Initialization", "Plugin directory is %s", pluginPath);
 
-    createConfigFile();
-    readConfigFile();
-
     return 0;
 }
 
 DllExport(int) Event_pluginStart(void) {
     
+    createConfigFile();
+    readConfigFile();
+
     int result = serverStart(config.port, config.path);
     
     if(result != 0) {
