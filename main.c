@@ -570,6 +570,9 @@ DllExport(int) Event_pluginStart(void) {
     
     if(result != 0) {
         pluginLog("Event_pluginStart", "WebSocket server startup failed");
+        const char* msg = UTF8ToGBK("WebSocket服务器启动失败，请尝试修改服务器监听端口并刷新插件重试");
+        MessageBoxA(NULL, msg, "WebSocket Plugin", MB_OK | MB_ICONERROR);
+        free(msg);
     } else {
         pluginLog("Event_pluginStart", "WebSocket server startup success");
     }
