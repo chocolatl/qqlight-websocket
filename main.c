@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <winsock2.h>
+#include <unistd.h>
 #include "lib/cjson/cJSON.h"
 #include "api.h"
 #include "ws.h"
@@ -25,6 +26,12 @@ const char* PLUGIN_INFO =
 
 char authCode[64];
 char pluginPath[1024];
+
+struct {
+    u_short port;
+} config = {
+    port: 49632
+};
 
 void pluginLog(const char* type, const char* format, ...) {
 	char buff[512];
@@ -456,6 +463,79 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET soc
     cJSON_Delete(json);
 }
 
+// 不存在配置文件时创建配置文件并写入全局变量config的默认配置
+void createConfigFile(void) {
+
+    char path[sizeof(pluginPath) + 20];
+    strcpy(path, pluginPath);
+    strcat(path, "config.json");
+
+    // 不存在配置文件
+    if(access(path, F_OK) == -1) {
+        
+        FILE* fp = fopen(path, "wb");
+        
+        if(fp == NULL) {
+            pluginLog("createConfigFile", "Failed to open file");
+            return;
+        }
+        
+        cJSON* root = cJSON_CreateObject();
+        cJSON_AddItemToObject(root, "port", cJSON_CreateNumber(config.port));
+
+        const char* json = cJSON_Print(root);
+        fwrite(json, strlen(json), 1, fp);
+
+        fclose(fp);
+        cJSON_Delete(root);
+        free((void*)json);
+    }
+}
+
+// 读取配置文件并覆盖全局变量config的默认配置
+void readConfigFile(void) {
+    
+    char path[sizeof(pluginPath) + 20];
+    strcpy(path, pluginPath);
+    strcat(path, "config.json");
+
+    FILE* fp = fopen(path, "rb");
+
+    if(fp == NULL) {
+        pluginLog("readConfigFile", "Failed to open file");
+        return;
+    }
+
+    fseek(fp, 0, SEEK_END);
+    size_t size = ftell(fp);
+    rewind(fp);
+    
+    char buff[size + 1];
+    if(fread(buff, size, 1, fp) != 1) {
+        pluginLog("readConfigFile", "Failed to read file");
+        fclose(fp);
+        return;
+    }
+    buff[size] = '\0';
+    
+    cJSON* json = cJSON_Parse(buff);
+    if(json == NULL) {
+        pluginLog("readConfigFile", "Failed to parse json");
+        cJSON_Delete(json);
+        fclose(fp);
+        return;
+    }
+
+    cJSON* j_port = cJSON_GetObjectItem(json, "port");
+    
+    if(cJSON_IsNumber(j_port)) {
+        config.port = (u_short)j_port->valueint;
+    }
+
+    cJSON_Delete(json);
+    fclose(fp);
+}
+
 DllExport(const char*) Information(const char* _authCode) {
     
     // 获取authCode
@@ -468,22 +548,25 @@ DllExport(int) Event_Initialization(void) {
     
     // 获取插件目录
     const char* path = QL_getPluginPath(authCode);
-    
+
     if(strlen(path) > sizeof(pluginPath) - 1) {
         pluginPath[0] = '\0';
-        pluginLog("initialization", "The plugin directory path length is too long");
+        pluginLog("Event_Initialization", "The plugin directory path length is too long");
     } else {
         strcpy(pluginPath, path);
     }
 
-    pluginLog("initialization", "Plugin directory is %s", pluginPath);
+    pluginLog("Event_Initialization", "Plugin directory is %s", pluginPath);
+
+    createConfigFile();
+    readConfigFile();
 
     return 0;
 }
 
 DllExport(int) Event_pluginStart(void) {
     
-    int result = serverStart();
+    int result = serverStart(config.port);
     
     if(result != 0) {
         pluginLog("Event_pluginStart", "WebSocket server startup failed");

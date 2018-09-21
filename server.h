@@ -7,7 +7,7 @@
 
 int wsFrameSend(SOCKET socket, const char* buff, int len, FrameType type);
 void wsFrameSendToAll(const char* buff, int len, FrameType type);
-int serverStart(void);
+int serverStart(u_short port);
 void serverStop(void);
 
 #endif

@@ -285,9 +285,8 @@ void receiveComingData(void) {
     goto receivingDataLoop;
 }
 
-int serverStart(void) {
+int serverStart(u_short port) {
 
-    #define SERVER_PORT 49632
     WSADATA wsaData;
     
     int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
@@ -301,7 +300,7 @@ int serverStart(void) {
     ZeroMemory(&sockAddr, sizeof(sockAddr));
     sockAddr.sin_family = PF_INET;
     sockAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
-    sockAddr.sin_port = htons(SERVER_PORT);
+    sockAddr.sin_port = htons(port);
     
     serverSocket = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
     
