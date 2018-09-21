@@ -395,7 +395,7 @@ int wsShakeHands(const char* recvBuff, int recvLen, SOCKET socket) {
     const char *keyPos, *keyPosEnd;
 
     if(
-        !strcmp(recvBuff, "GET / HTTP/1.1\r\n")             ||
+        strstr(recvBuff, "GET / HTTP/1.1\r\n") != recvBuff  ||
         !strstr(recvBuff, "Connection: ")                   ||
         !strstr(recvBuff, "Upgrade: websocket")             ||
         !strstr(recvBuff, "Sec-WebSocket-Version: 13")      ||
