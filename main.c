@@ -502,6 +502,10 @@ DllExport(int) Event_GetNewMsg (
     const char* msgid      // 消息id，撤回消息的时候会用到，群消息会存在，其余情况下为空  
 ) {
 
+    // 将可能为NULL的字符串指针参数修改为空字符串
+    group = group ? group : "";
+    msgid = msgid ? msgid : "";
+
     const char* u8Content = GBKToUTF8(msg);
 
     cJSON* root = cJSON_CreateObject();
@@ -579,6 +583,9 @@ void handleGroupMemberChange(
     const char* event
 ) {
 
+    // 将可能为NULL的字符串指针参数修改为空字符串
+    operator = operator ? operator : "";
+
     cJSON* root = cJSON_CreateObject();
     cJSON_AddItemToObject(root, "event", cJSON_CreateString(event));
 
@@ -587,7 +594,7 @@ void handleGroupMemberChange(
     cJSON_AddItemToObject(params, "type", cJSON_CreateNumber(type));
     cJSON_AddItemToObject(params, "group", cJSON_CreateString(group));
     cJSON_AddItemToObject(params, "qq", cJSON_CreateString(qq));
-    cJSON_AddItemToObject(params, "operator", cJSON_CreateString(operator));  // operator可能为NULL，这时该字段将不存在
+    cJSON_AddItemToObject(params, "operator", cJSON_CreateString(operator));
     
     cJSON_AddItemToObject(root, "params", params);
 
@@ -615,7 +622,7 @@ DllExport(int) Event_GroupMemberDecrease(
     const char* qq,         // 
     const char* operator    // 操作者QQ，仅在被管理员踢出时存在
 ) {
-    handleGroupMemberChange(type, group, qq, operator, "groupMemberDecrease");  // 这里的operator可能为NULL
+    handleGroupMemberChange(type, group, qq, operator, "groupMemberDecrease");
     return 0;
 }
 
@@ -654,6 +661,11 @@ DllExport(int) Event_AddGroup(
     const char* message,    // 加群附加消息，只有主动加群时存在
     const char* seq         // seq，同意加群时需要用到
 ) {
+
+    // 将可能为NULL的字符串指针参数修改为空字符串
+    operator = operator ? operator : "";
+    message  = message  ? message  : "";
+    seq      = seq      ? seq      : "";
 
     cJSON* root = cJSON_CreateObject();
     cJSON_AddItemToObject(root, "event", cJSON_CreateString("groupRequest"));
