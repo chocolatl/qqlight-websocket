@@ -467,8 +467,17 @@ DllExport(const char*) Information(const char* _authCode) {
 DllExport(int) Event_Initialization(void) {
     
     // 获取插件目录
-    strncpy(pluginPath, QL_getPluginPath(authCode), sizeof(authCode) - 1);
+    const char* path = QL_getPluginPath(authCode);
     
+    if(strlen(path) > sizeof(pluginPath) - 1) {
+        pluginPath[0] = '\0';
+        pluginLog("initialization", "The plugin directory path length is too long");
+    } else {
+        strcpy(pluginPath, path);
+    }
+
+    pluginLog("initialization", "Plugin directory is %s", pluginPath);
+
     return 0;
 }
 
