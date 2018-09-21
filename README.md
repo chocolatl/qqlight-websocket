@@ -174,9 +174,9 @@ type为`2`时，我也没弄懂是什么情况
 {
     "method": "sendMessage", 
     "params": {
-        "type"    : 2,
-        "group"   : "",
-        "qq"      : "",
+        "type"    : 2,      // 1=好友消息、2=群消息、3=群临时消息、4=讨论组消息、5=讨论组临时消息、6=QQ临时消息
+        "group"   : "",     // 群号或讨论组号，发送消息给好友的情况下忽略
+        "qq"      : "",     // QQ号，发送消息给群或讨论组的情况下忽略
         "content" : ""
     }
 }
@@ -202,8 +202,8 @@ type为`2`时，我也没弄懂是什么情况
 
 ```js
 {
-    "id": "",
-    "method": "getFriendList"
+    "id"     : "",
+    "method" : "getFriendList"
 }
 ```
 
@@ -213,8 +213,8 @@ type为`2`时，我也没弄懂是什么情况
 {
     "method": "addFriend", 
     "params": {
-        "qq": "",
-        "message": ""       // 验证消息，可选
+        "qq"        : "",
+        "message"   : ""       // 验证消息，可选
     }
 }
 ```
@@ -259,8 +259,8 @@ type为`2`时，我也没弄懂是什么情况
 {
     "method": "addGroup", 
     "params": {
-        "group": "",
-        "message": ""
+        "group"     : "",
+        "message"   : ""    // 验证消息，可选
     }
 }
 ```
@@ -286,8 +286,8 @@ type为`2`时，我也没弄懂是什么情况
 {
     "method": "getGroupCard", 
     "params": {
-        "group": "",
-        "qq": ""
+        "group" : "",
+        "qq"    : ""
     }
 }
 ```
@@ -298,9 +298,9 @@ type为`2`时，我也没弄懂是什么情况
 {
     "method": "uploadImage",
     "params": {
-        "type": 2,          // 1=私聊类型的图片、2=群组类型的图片
+        "type"  : 2,        // 1=私聊类型的图片、2=群组类型的图片
         "object": ""        // 图片准备发送到的QQ号或群组号
-        "data": ""          // 图像数据转换的十六进制字符串
+        "data"  : ""        // 图像数据转换的十六进制字符串
     }
 }
 ```
@@ -337,8 +337,8 @@ type为`2`时，我也没弄懂是什么情况
 {
     "method": "inviteIntoGroup",
     "params": {
-        "qq": "",
-        "group": ""
+        "qq"    : "",
+        "group" : ""
     }
 }
 ```
@@ -351,9 +351,9 @@ type为`2`时，我也没弄懂是什么情况
 {
     "method": "setGroupCard", 
     "params": {
-        "group": "",
-        "qq": "",
-        "name": ""
+        "group" : "",
+        "qq"    : "",
+        "name"  : ""
     }
 }
 ```
@@ -422,9 +422,9 @@ type为`2`时，我也没弄懂是什么情况
 {
     "method": "handleFriendRequest",
     "params": {
-        "qq": "",
-        "type": 1,      // 1=同意、2=拒绝、3=忽略
-        "message": ""   // 拒绝理由，仅在拒绝请求时有效
+        "qq"       : "",
+        "type"     : 1,      // 1=同意、2=拒绝、3=忽略
+        "message"  : ""      // 拒绝理由，仅在拒绝请求时有效
     }
 }
 ```
@@ -483,7 +483,7 @@ type为`2`时，我也没弄懂是什么情况
     "params": {
         "group"     : "",
         "qq"        : "",
-        "duration"  : 0     // 禁言时间，单位秒，为0时解除禁言
+        "duration"  : 0     // 禁言时间，单位为秒，为0时解除禁言
     }
 }
 ```
@@ -497,7 +497,7 @@ type为`2`时，我也没弄懂是什么情况
     "method": "globalSilence",
     "params": {
         "group"   : "",
-        "enable"  : true     // false为取消全体禁言
+        "enable"  : true     // true为全体禁言,false为取消全体禁言
     }
 }
 ```
