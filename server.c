@@ -327,7 +327,7 @@ int serverStart(u_short port, const char* path) {
     clientSockets.total = 0;
     
     DWORD dwThreadId;
-    HANDLE hHandle = CreateThread(NULL, 0, (void*)receiveComingData, path, 0, &dwThreadId);
+    HANDLE hHandle = CreateThread(NULL, 0, (void*)receiveComingData, (PVOID)path, 0, &dwThreadId);
     
     return 0;
 }

@@ -394,7 +394,7 @@ int wsShakeHands(const char* recvBuff, int recvLen, SOCKET socket, const char* p
 
     const char *keyPos, *keyPosEnd;
 
-    const char requestLine[512];
+    char requestLine[512];
     sprintf(requestLine, "GET %s%s HTTP/1.1\r\n", (strlen(path) == 0 || path[0] != '/') ? "/" : "", path);
 
     if(
