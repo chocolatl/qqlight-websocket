@@ -299,7 +299,7 @@ int serverStart(u_short port, const char* path) {
     
     ZeroMemory(&sockAddr, sizeof(sockAddr));
     sockAddr.sin_family = PF_INET;
-    sockAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    sockAddr.sin_addr.s_addr = inet_addr("0.0.0.0");
     sockAddr.sin_port = htons(port);
     
     serverSocket = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
