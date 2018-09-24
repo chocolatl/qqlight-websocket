@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <string.h>
+#include <stdbool.h>
 #include <windef.h>
 #include <stdlib.h>
 #include <winsock2.h>
@@ -373,6 +375,80 @@ int getSecWebSocketAcceptKey(const char* key, char* b64buff, int len) {
     return 0;
 }
 
+// 校验WebSocket握手的HTTP头，失败返回NULL，校验成功顺带返回Sec-WebSocket-Key，记得free
+char* verifyHandshakeHeaders(const char* str, size_t len) {
+
+    char* secKey = NULL;
+    char a[len + 1], b[len + 1];
+    bool connection, upgrade, version, key;
+    connection = upgrade = version = key = false;
+
+    if(strcmp(str + len - 4, "\r\n\r\n") != 0) {
+        pluginLog("verifyHandshakeHeaders", "HTTP header does not end with '\\r\\n\\r\\n'");
+        return NULL;
+    }
+    
+    const char* cur1 = strstr(str, "\r\n") + 2;
+    const char* cur2;
+
+    while((cur2 = strstr(cur1, "\r\n")) != cur1) {
+
+        cur2 += 2;  // 跳过\r\n
+
+        const char* colon = strchr(cur1, ':');
+        if(colon == NULL || colon >= cur2) {
+            pluginLog("verifyHandshakeHeaders", "Unexpected HTTP header");
+            break;
+        }
+
+        if(sscanf(cur1, "%[^:]:%s", a, b) != 2) {
+            pluginLog("verifyHandshakeHeaders", "HTTP header parsing failed");
+            break;
+        }
+
+        if(_stricmp(a, "connection") == 0) {
+
+            connection = true;
+
+        } else if (_stricmp(a, "upgrade") == 0) {
+
+            if(_stricmp(b, "websocket") != 0) {
+                pluginLog("verifyHandshakeHeaders", "Unexpected value '%s' of Upgrade filed", b);
+                break;
+            }
+
+            upgrade = true;
+
+        } else if (_stricmp(a, "Sec-WebSocket-Version") == 0) {
+
+            if(_stricmp(b, "13") != 0) {
+                pluginLog("verifyHandshakeHeaders", "Unexpected value '%s' of Sec-WebSocket-Version filed", b);
+                break;
+            }
+
+            version = true;
+
+        } else if (_stricmp(a, "Sec-WebSocket-Key") == 0) {
+
+            if(!key) {
+                key = true;
+                secKey = malloc(strlen(b) + 1);
+                strcpy(secKey, b);
+            }
+        }
+
+        cur1 = cur2;
+    }
+
+    if(!(connection && upgrade && version && key)) {
+        pluginLog("verifyHandshakeHeaders", "Missing necessary fields");
+        if(key) free((void*)secKey);       // 释放申请的内存
+        return NULL;
+    }
+
+    return secKey;
+}
+
 // 处理HTTP协议升级为WebSocket协议的握手请求，握手成功返回0，失败返回-1
 int wsShakeHands(const char* recvBuff, int recvLen, SOCKET socket, const char* path) {
 
@@ -386,49 +462,28 @@ int wsShakeHands(const char* recvBuff, int recvLen, SOCKET socket, const char* p
         return -1;
     }
 
-    // 找不到HTTP头结尾
-    if(!strstr(recvBuff, "\r\n\r\n")) {
-        pluginLog("wsShakeHands", "Incomplete HTTP header");
-        return -1;
-    }
-
-    const char *keyPos, *keyPosEnd;
-
     char requestLine[512];
     sprintf(requestLine, "GET %s%s HTTP/1.1\r\n", (strlen(path) == 0 || path[0] != '/') ? "/" : "", path);
 
-    if(
-        strstr(recvBuff, requestLine) != recvBuff           ||
-        !strstr(recvBuff, "Connection: ")                   ||
-        !strstr(recvBuff, "Upgrade: websocket")             ||
-        !strstr(recvBuff, "Sec-WebSocket-Version: 13")      ||
-        !(keyPos = strstr(recvBuff, "Sec-WebSocket-Key: "))
-    ) {
+    if(strstr(recvBuff, requestLine) != recvBuff) {
         send(socket, HTTP_400, strlen(HTTP_400), 0);
-        pluginLog("wsShakeHands", "Missing required fields");
+        pluginLog("wsShakeHands", "Unexpected request line");
         return -1;
     }
 
-    keyPos = strstr(keyPos, ": ");
-    keyPos += 2;
+    const char *secKey = verifyHandshakeHeaders(recvBuff, recvLen);
 
-    if((keyPosEnd = strstr(keyPos, "\r\n")) == NULL) {
-        pluginLog("wsShakeHands", "Can't find keyPosEnd");
+    if(!secKey) {
+        send(socket, HTTP_400, strlen(HTTP_400), 0);
         return -1;
     }
-
-    char keyBuff[128], acptBuff[128];
-
-    // 获取Sec-WebSocket-Key
-    sprintf(keyBuff, "%.*s", keyPosEnd - keyPos, keyPos);
-
-    pluginLog("wsShakeHands", "Sec-WebSocket-Key is %s", keyBuff);
 
     // 获取Sec-WebSocket-Accept
-    getSecWebSocketAcceptKey(keyBuff, acptBuff, sizeof(acptBuff));
-
-    pluginLog("wsShakeHands", "Sec-WebSocket-Accept is %s", acptBuff);
-    
+    char acptBuff[128];
+    getSecWebSocketAcceptKey(secKey, acptBuff, sizeof(acptBuff));
+    pluginLog("wsShakeHands", "Sec-WebSocket-Key is '%s'", secKey);
+    pluginLog("wsShakeHands", "Sec-WebSocket-Accept is '%s'", acptBuff);
+    free((void*)secKey);   // 释放secKey
 
     // 协议升级
 
