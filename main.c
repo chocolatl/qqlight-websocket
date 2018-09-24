@@ -193,7 +193,7 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET soc
 
     } else if (METHOD_IS("addFriend")) {
 
-        PARAMS_CHECK(e_id);
+        PARAMS_CHECK(e_qq);
 
         if(!e_message) {
             QL_addFriend(v_qq, "", authCode);
@@ -205,7 +205,7 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET soc
 
     } else if (METHOD_IS("deleteFriend")) {
 
-        PARAMS_CHECK(e_id);
+        PARAMS_CHECK(e_qq);
 
         QL_deleteFriend(v_qq, authCode);
 
