@@ -462,16 +462,21 @@ int wsShakeHands(const char* recvBuff, int recvLen, SOCKET socket, const char* p
         return -1;
     }
 
+    // 注：recvBuff不以'\0'结尾
+    char resText[recvLen + 1];
+    memcpy(resText, recvBuff, recvLen);
+    resText[recvLen] = '\0';
+
     char requestLine[512];
     sprintf(requestLine, "GET %s%s HTTP/1.1\r\n", (strlen(path) == 0 || path[0] != '/') ? "/" : "", path);
 
-    if(strstr(recvBuff, requestLine) != recvBuff) {
+    if(strstr(resText, requestLine) != resText) {
         send(socket, HTTP_400, strlen(HTTP_400), 0);
         pluginLog("wsShakeHands", "Unexpected request line");
         return -1;
     }
 
-    const char *secKey = verifyHandshakeHeaders(recvBuff, recvLen);
+    const char *secKey = verifyHandshakeHeaders(resText, recvLen);
 
     if(!secKey) {
         send(socket, HTTP_400, strlen(HTTP_400), 0);
