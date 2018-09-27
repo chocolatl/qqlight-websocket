@@ -117,8 +117,8 @@ ws.on('message', data => {
 - [接口.禁言](#接口禁言)
 - [接口.全体禁言](#接口全体禁言)
 - [替换符.at](#替换符at)
-- [替换符.face/emoji](#替换符face/emoji)
-- [替换符.image/flash](#替换符image/flash)
+- [替换符.face/emoji](#替换符faceemoji)
+- [替换符.image/flash](#替换符imageflash)
 
 ### 事件.收到消息
 
