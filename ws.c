@@ -470,7 +470,7 @@ int wsShakeHands(const char* recvBuff, int recvLen, SOCKET socket, const char* p
     char requestLine[512];
     sprintf(requestLine, "GET %s%s HTTP/1.1\r\n", (strlen(path) == 0 || path[0] != '/') ? "/" : "", path);
 
-    if(strstr(resText, requestLine) != resText) {
+    if(_strnicmp(resText, requestLine, strlen(requestLine)) != 0) {
         send(socket, HTTP_400, strlen(HTTP_400), 0);
         pluginLog("wsShakeHands", "Unexpected request line");
         return -1;
