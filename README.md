@@ -1,6 +1,6 @@
-[![stars](https://img.shields.io/github/stars/Chocolatl/qqlight-websocket.svg?colorB=red)](https://github.com/Chocolatl/qqlight-websocket/stargazers)
-[![releases](https://img.shields.io/github/downloads/Chocolatl/qqlight-websocket/total.svg?colorB=green)](https://github.com/Chocolatl/qqlight-websocket/releases)
-[![GitHub release](https://img.shields.io/github/release/Chocolatl/qqlight-websocket.svg)](https://github.com/Chocolatl/qqlight-websocket/releases)
+[![stars](https://img.shields.io/github/stars/Chocolatl/qqlight-websocket.svg)](https://github.com/Chocolatl/qqlight-websocket/stargazers)
+[![download](https://img.shields.io/github/downloads/Chocolatl/qqlight-websocket/total.svg)](https://github.com/Chocolatl/qqlight-websocket/releases)
+[![release](https://img.shields.io/github/release/Chocolatl/qqlight-websocket.svg)](https://github.com/Chocolatl/qqlight-websocket/releases)
 [![license](https://img.shields.io/badge/license-GLWT-green.svg)](https://github.com/Chocolatl/qqlight-websocket/blob/master/LICENSE)
 
 [QQLight机器人](http://www.52chat.cc/)（原Amanda QQ）框架的WebSocket-RPC插件
