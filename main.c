@@ -798,6 +798,45 @@ DllExport(int) Event_AddGroup(
     return 0;
 }
 
+DllExport(int) Event_GetQQWalletData(
+    int type,               // 1=好友转账、2=群临时会话转账、3=讨论组临时会话转账
+    const char* group,      // type为1时此参数为空，type为2、3时分别为群号或讨论组号
+    const char* qq,         // 转账者QQ
+    const char* amount,     // 转账金额
+    const char* message,    // 转账备注消息
+    const char* id          // 转账订单号
+) {
+
+    // 将可能为NULL的字符串指针参数修改为空字符串
+    group     = group    ? group    : "";
+    message   = message  ? message  : "";
+
+    cJSON* root = cJSON_CreateObject();
+    cJSON_AddItemToObject(root, "event", cJSON_CreateString("receiveMoney"));
+    
+    cJSON* params = cJSON_CreateObject();
+    const char* u8Message = GBKToUTF8(message ? message : "");
+
+    cJSON_AddItemToObject(params, "type", cJSON_CreateNumber(type));
+    cJSON_AddItemToObject(params, "group", cJSON_CreateString(group));
+    cJSON_AddItemToObject(params, "qq", cJSON_CreateString(qq));
+    cJSON_AddItemToObject(params, "amount", cJSON_CreateString(amount));
+    cJSON_AddItemToObject(params, "message", cJSON_CreateString(u8Message));
+    cJSON_AddItemToObject(params, "id", cJSON_CreateString(id));
+    
+    cJSON_AddItemToObject(root, "params", params);
+
+    const char* jsonStr = cJSON_PrintUnformatted(root);
+
+    wsFrameSendToAll(jsonStr, strlen(jsonStr), frameType_text);
+
+    cJSON_Delete(root);
+    free((void*)u8Message);
+    free((void*)jsonStr);
+
+    return 0;
+}
+
 BOOL APIENTRY DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved) {
     
     if(loadQQLightAPI() != 0) {
