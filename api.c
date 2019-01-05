@@ -1,6 +1,8 @@
 #include <windows.h>
 #include <stdbool.h>
+#define DEFINE_QL_API
 #include "api.h"
+#undef DEFINE_QL_API
 
 bool isLoaded = false;
 HMODULE libHandle;
