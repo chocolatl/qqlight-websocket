@@ -155,7 +155,7 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET soc
     const char* v_name     = e_name     ?  j_name->valuestring     :  NULL;
     const char* v_seq      = e_seq      ?  j_seq->valuestring      :  NULL;
     int         v_duration = e_duration ?  j_duration->valueint    :  -1;
-    bool        v_enable   = e_enable   ?  cJSON_IsTrue(j_enable)  : false;
+    bool        v_enable   = e_enable   ?  cJSON_IsTrue(j_enable)  :  false;
  
     pluginLog("jsonRPC", "Client call '%s' method", v_method);
 
