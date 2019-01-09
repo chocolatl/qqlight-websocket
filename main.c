@@ -82,6 +82,41 @@ char* UTF8ToGBK(const char* str) {
     return gbstr;
 }
 
+void sendAcceptJSON(SOCKET socket, const char* idField) {
+    cJSON* root = cJSON_CreateObject();
+    cJSON_AddItemToObject(root, "id", cJSON_CreateString(idField));
+
+    const char* jsonStr = cJSON_PrintUnformatted(root);
+    wsFrameSend(socket, jsonStr, strlen(jsonStr), frameType_text);
+
+    cJSON_Delete(root);
+    free((void*)jsonStr);
+}
+
+void sendErrorJSON(SOCKET socket, const char* idField, const char* errorField) {
+    cJSON* root = cJSON_CreateObject();
+    cJSON_AddItemToObject(root, "id", cJSON_CreateString(idField));
+    cJSON_AddItemToObject(root, "error", cJSON_CreateString(errorField));
+
+    const char* jsonStr = cJSON_PrintUnformatted(root);
+    wsFrameSend(socket, jsonStr, strlen(jsonStr), frameType_text);
+
+    cJSON_Delete(root);
+    free((void*)jsonStr);
+}
+
+void sendSuccessJSON(SOCKET socket, const char* idField, cJSON* resultField) {
+    cJSON* root = cJSON_CreateObject();
+    cJSON_AddItemToObject(root, "id", cJSON_CreateString(idField));
+    cJSON_AddItemToObject(root, "result", resultField);
+
+    const char* jsonStr = cJSON_PrintUnformatted(root);
+    wsFrameSend(socket, jsonStr, strlen(jsonStr), frameType_text);
+
+    cJSON_Delete(root);
+    free((void*)jsonStr);
+}
+
 void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET socket) {
     
     // 注意，payload的文本数据不是以\0结尾
@@ -112,7 +147,14 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET soc
     const char* v_method = e_method ?  j_method->valuestring  : NULL;
     const char* v_params = e_params ?  j_params->valuestring  : NULL;
 
+    if(!e_id) {
+        sendErrorJSON(socket, "", "Missing 'id' Field");
+        cJSON_Delete(json);
+        return;
+    }
+    
     if(!e_method) {
+        sendErrorJSON(socket, v_id, "Missing 'method' Field");
         cJSON_Delete(json);
         return;
     }
@@ -159,7 +201,7 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET soc
  
     pluginLog("jsonRPC", "Client call '%s' method", v_method);
 
-    #define PARAMS_CHECK(condition) if(!(condition)) {pluginLog("jsonParse", "Invalid data"); goto RPCParseEnd;}
+    #define PARAMS_CHECK(condition) if(!(condition)) {sendErrorJSON(socket, v_id, "Invalid Parameters"); goto RPCParseEnd;}
     #define METHOD_IS(name) (strcmp(name, v_method) == 0)
     
     if(METHOD_IS("sendMessage")) {
@@ -170,28 +212,23 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET soc
         QL_sendMessage(v_type, e_content ? v_group : "", e_qq ? v_qq : "", gbkText, authCode);
         free((void*)gbkText);
 
+        sendAcceptJSON(socket, v_id);
+
     } else if (METHOD_IS("withdrawMessage")) {
 
         PARAMS_CHECK(e_group && e_msgid);
 
         QL_withdrawMessage(v_group, v_msgid, authCode);
 
+        sendAcceptJSON(socket, v_id);
+
     } else if (METHOD_IS("getFriendList")) {
 
-        PARAMS_CHECK(e_id);
-
-        cJSON* root = cJSON_CreateObject();
-        cJSON_AddItemToObject(root, "id", cJSON_CreateString(v_id));
-
         const char* friendList = GBKToUTF8(QL_getFriendList(authCode));
-        cJSON_AddItemToObject(root, "result", cJSON_Parse(friendList));
 
-        const char* jsonStr = cJSON_PrintUnformatted(root);
-        wsFrameSend(socket, jsonStr, strlen(jsonStr), frameType_text);
+        sendSuccessJSON(socket, v_id, cJSON_Parse(friendList));
 
-        cJSON_Delete(root);
         free((void*)friendList);
-        free((void*)jsonStr);
 
     } else if (METHOD_IS("addFriend")) {
 
@@ -205,45 +242,33 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET soc
             free((void*)text);
         }
 
+        sendAcceptJSON(socket, v_id);
+
     } else if (METHOD_IS("deleteFriend")) {
 
         PARAMS_CHECK(e_qq);
 
         QL_deleteFriend(v_qq, authCode);
 
+        sendAcceptJSON(socket, v_id);
+
     } else if (METHOD_IS("getGroupList")) {
 
-        PARAMS_CHECK(e_id);
-
-        cJSON* root = cJSON_CreateObject();
-        cJSON_AddItemToObject(root, "id", cJSON_CreateString(v_id));
-
         const char* groupList = GBKToUTF8(QL_getGroupList(authCode));
-        cJSON_AddItemToObject(root, "result", cJSON_Parse(groupList));
 
-        const char* jsonStr = cJSON_PrintUnformatted(root);
-        wsFrameSend(socket, jsonStr, strlen(jsonStr), frameType_text);
+        sendSuccessJSON(socket, v_id, cJSON_Parse(groupList));
 
-        cJSON_Delete(root);
         free((void*)groupList);
-        free((void*)jsonStr);
 
     } else if (METHOD_IS("getGroupMemberList")) {
 
-        PARAMS_CHECK(e_id && e_group);
-
-        cJSON* root = cJSON_CreateObject();
-        cJSON_AddItemToObject(root, "id", cJSON_CreateString(v_id));
+        PARAMS_CHECK(e_group);
 
         const char* groupMemberList = GBKToUTF8(QL_getGroupMemberList(v_group, authCode));
-        cJSON_AddItemToObject(root, "result", cJSON_Parse(groupMemberList));
 
-        const char* jsonStr = cJSON_PrintUnformatted(root);
-        wsFrameSend(socket, jsonStr, strlen(jsonStr), frameType_text);
+        sendSuccessJSON(socket, v_id, cJSON_Parse(groupMemberList));
 
-        cJSON_Delete(root);
         free((void*)groupMemberList);
-        free((void*)jsonStr);
 
     } else if (METHOD_IS("addGroup")) {
 
@@ -257,35 +282,29 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET soc
             free((void*)text);
         }
 
+        sendAcceptJSON(socket, v_id);
+
     } else if (METHOD_IS("quitGroup")) {
 
         PARAMS_CHECK(e_group);
 
         QL_quitGroup(v_group, authCode);
 
+        sendAcceptJSON(socket, v_id);
+
     } else if (METHOD_IS("getGroupCard")) {
 
-        PARAMS_CHECK(e_id && e_group && e_qq);
-
-        cJSON* root = cJSON_CreateObject();
-        cJSON_AddItemToObject(root, "id", cJSON_CreateString(v_id));
+        PARAMS_CHECK(e_group && e_qq);
 
         const char* groupCard = GBKToUTF8(QL_getGroupCard(v_group, v_qq, authCode));
-        cJSON_AddItemToObject(root, "result", cJSON_CreateString(groupCard));
 
-        const char* jsonStr = cJSON_PrintUnformatted(root);
-        wsFrameSend(socket, jsonStr, strlen(jsonStr), frameType_text);
+        sendSuccessJSON(socket, v_id, cJSON_Parse(groupCard));
 
-        cJSON_Delete(root);
         free((void*)groupCard);
-        free((void*)jsonStr);
 
     } else if (METHOD_IS("uploadImage")) {
 
-        PARAMS_CHECK(e_id && e_type && e_object && e_data);
-
-        cJSON* root = cJSON_CreateObject();
-        cJSON_AddItemToObject(root, "id", cJSON_CreateString(v_id));
+        PARAMS_CHECK(e_type && e_object && e_data);
 
         const char* text = QL_uploadImage(v_type, v_object, v_data, authCode);
         int textLen = strlen(text);
@@ -294,50 +313,30 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET soc
             char guid[textLen + 1];
             strcpy(guid, text);
             guid[textLen - 1] = '\0';   // 去除末尾的']'
-            cJSON_AddItemToObject(root, "result", cJSON_CreateString(guid + 8));    // 去除开头的'[QQ:pic='
+            sendSuccessJSON(socket, v_id, cJSON_CreateString(guid + 8));    // 去除开头的'[QQ:pic='
         } else {
-            cJSON_AddItemToObject(root, "result", cJSON_CreateString(""));
+            sendSuccessJSON(socket, v_id, cJSON_CreateString(""));
         }
-
-        const char* jsonStr = cJSON_PrintUnformatted(root);
-        wsFrameSend(socket, jsonStr, strlen(jsonStr), frameType_text);
-
-        cJSON_Delete(root);
-        free((void*)jsonStr);
 
     } else if (METHOD_IS("getQQInfo")) {
 
-        PARAMS_CHECK(e_id && e_qq);
-
-        cJSON* root = cJSON_CreateObject();
-        cJSON_AddItemToObject(root, "id", cJSON_CreateString(v_id));
+        PARAMS_CHECK(e_qq);
 
         const char* info = GBKToUTF8(QL_getQQInfo(v_qq, authCode));
-        cJSON_AddItemToObject(root, "result", cJSON_Parse(info));
 
-        const char* jsonStr = cJSON_PrintUnformatted(root);
-        wsFrameSend(socket, jsonStr, strlen(jsonStr), frameType_text);
+        sendSuccessJSON(socket, v_id, cJSON_Parse(info));
 
-        cJSON_Delete(root);
         free((void*)info);
-        free((void*)jsonStr);
 
     } else if (METHOD_IS("getGroupInfo")) {
 
-        PARAMS_CHECK(e_id && e_group);
-
-        cJSON* root = cJSON_CreateObject();
-        cJSON_AddItemToObject(root, "id", cJSON_CreateString(v_id));
+        PARAMS_CHECK(e_group);
 
         const char* info = GBKToUTF8(QL_getGroupInfo(v_group, authCode));
-        cJSON_AddItemToObject(root, "result", cJSON_Parse(info));
 
-        const char* jsonStr = cJSON_PrintUnformatted(root);
-        wsFrameSend(socket, jsonStr, strlen(jsonStr), frameType_text);
+        sendSuccessJSON(socket, v_id, cJSON_Parse(info));
 
-        cJSON_Delete(root);
         free((void*)info);
-        free((void*)jsonStr);
 
     } else if (METHOD_IS("inviteIntoGroup")) {
 
@@ -345,28 +344,23 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET soc
 
         QL_inviteIntoGroup(v_group, v_qq, authCode);
 
+        sendAcceptJSON(socket, v_id);
+
     } else if (METHOD_IS("setGroupCard")) {
 
         PARAMS_CHECK(e_qq && e_group && e_name);
 
         QL_setGroupCard(v_group, v_qq, v_name, authCode);
 
+        sendAcceptJSON(socket, v_id);
+
     } else if (METHOD_IS("getLoginAccount")) {
 
-        PARAMS_CHECK(e_id);
-
-        cJSON* root = cJSON_CreateObject();
-        cJSON_AddItemToObject(root, "id", cJSON_CreateString(v_id));
-
         const char* account = GBKToUTF8(QL_getLoginAccount(authCode));
-        cJSON_AddItemToObject(root, "result", cJSON_CreateString(account));
 
-        const char* jsonStr = cJSON_PrintUnformatted(root);
-        wsFrameSend(socket, jsonStr, strlen(jsonStr), frameType_text);
+        sendSuccessJSON(socket, v_id, cJSON_CreateString(account));
 
-        cJSON_Delete(root);
         free((void*)account);
-        free((void*)jsonStr);
 
     } else if (METHOD_IS("setSignature")) {
 
@@ -374,45 +368,35 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET soc
 
         QL_setSignature(v_content, authCode);
 
+        sendAcceptJSON(socket, v_id);
+
     } else if (METHOD_IS("getNickname")) {
 
-        PARAMS_CHECK(e_id && e_qq);
-
-        cJSON* root = cJSON_CreateObject();
-        cJSON_AddItemToObject(root, "id", cJSON_CreateString(v_id));
+        PARAMS_CHECK(e_qq);
 
         const char* nickname = GBKToUTF8(QL_getNickname(v_qq, authCode));
-        cJSON_AddItemToObject(root, "result", cJSON_CreateString(nickname));
 
-        const char* jsonStr = cJSON_PrintUnformatted(root);
-        wsFrameSend(socket, jsonStr, strlen(jsonStr), frameType_text);
+        sendSuccessJSON(socket, v_id, cJSON_CreateString(nickname));
 
-        cJSON_Delete(root);
         free((void*)nickname);
-        free((void*)jsonStr);
 
     } else if (METHOD_IS("getPraiseCount")) {
 
-        PARAMS_CHECK(e_id && e_qq);
-
-        cJSON* root = cJSON_CreateObject();
-        cJSON_AddItemToObject(root, "id", cJSON_CreateString(v_id));
+        PARAMS_CHECK(e_qq);
 
         const char* count = GBKToUTF8(QL_getPraiseCount(v_qq, authCode));
-        cJSON_AddItemToObject(root, "result", cJSON_CreateString(count));
 
-        const char* jsonStr = cJSON_PrintUnformatted(root);
-        wsFrameSend(socket, jsonStr, strlen(jsonStr), frameType_text);
+        sendSuccessJSON(socket, v_id, cJSON_CreateString(count));
 
-        cJSON_Delete(root);
         free((void*)count);
-        free((void*)jsonStr);
 
     } else if (METHOD_IS("givePraise")) {
 
         PARAMS_CHECK(e_qq);
 
         QL_givePraise(v_qq, authCode);
+
+        sendAcceptJSON(socket, v_id);
 
     } else if (METHOD_IS("handleFriendRequest")) {
 
@@ -426,11 +410,15 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET soc
             QL_handleFriendRequest(v_qq, v_type, "", authCode);
         }
 
+        sendAcceptJSON(socket, v_id);
+
     } else if (METHOD_IS("setState")) {
 
         PARAMS_CHECK(e_type);
 
         QL_setState(v_type, authCode);
+
+        sendAcceptJSON(socket, v_id);
 
     } else if (METHOD_IS("handleGroupRequest")) {
 
@@ -440,11 +428,15 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET soc
 
         QL_handleGroupRequest(v_group, v_qq, v_seq, v_type, message, authCode);
 
+        sendAcceptJSON(socket, v_id);
+
     } else if (METHOD_IS("kickGroupMember")) {
 
         PARAMS_CHECK(e_group && e_qq);
 
         QL_kickGroupMember(v_group, v_qq, false, authCode);
+
+        sendAcceptJSON(socket, v_id);
 
     } else if (METHOD_IS("silence")) {
 
@@ -452,14 +444,18 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET soc
 
         QL_silence(v_group, v_qq, v_duration, authCode);
 
+        sendAcceptJSON(socket, v_id);
+
     } else if (METHOD_IS("globalSilence")) {
 
         PARAMS_CHECK(e_group && e_enable);
 
         QL_globalSilence(v_group, v_enable, authCode);
 
+        sendAcceptJSON(socket, v_id);
+
     } else {
-        pluginLog("jsonRPC", "Unknown method '%s'", v_method);
+        sendErrorJSON(socket, v_id, "Unknown Method");
     }
 
     RPCParseEnd:

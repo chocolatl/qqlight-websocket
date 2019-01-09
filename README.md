@@ -46,6 +46,7 @@ ws.onmessage = function(ev) {
     var params = data.params;
     if(data.event === 'message') {
         var rpc = {
+            id: Math.random().toString(),
             method: "sendMessage",
             params: {
                 type    : params.type,
@@ -70,6 +71,7 @@ ws.on('message', data => {
     data = JSON.parse(data);
     if(data.event === 'message') {
         ws.send(JSON.stringify({
+            id: Math.random().toString(),
             method: 'sendMessage',
             params: {...data.params}
         }));
@@ -79,11 +81,65 @@ ws.on('message', data => {
 
 ## API文档
 
-远程调用采用类似JSON-RPC的数据格式，服务端与客户端发送的消息都**必须**是顶层结构为对象的JSON格式文本，编码**必须**为UTF-8
+服务端与客户端发送的消息都是顶层结构为`对象`的JSON格式文本，文本编码为UTF-8
 
-如果调用的接口会返回数据，那么调用请求**必须**携带字符串类型的`id`字段，且每次调用请求都应该使用不同的`id`，服务器返回结果会包含与调用时相同的`id`
+### 事件
 
-`id`是必须的，因为对于网络I/O环境下，发送和接收通常不是一个同步的过程，收发的消息未必按序到达，不同的`id`能帮助你辨别返回的数据属于哪次调用
+`事件`是服务器会主动发送给客户端的消息，如机器人收到好友请求时，服务器会向客户端发送如下格式的消息：
+
+```js
+{
+    "event": "friendRequest", 
+    "params": {
+        "qq"      : "123456",
+        "message" : ""
+    }
+}
+```
+
+### 接口
+
+`接口`是客户端可以发送给服务器的消息，服务器收到消息会调用机器人相应的方法处理，下面是删除好友的消息示例：
+
+```js
+{
+    "id"    : "1024"
+    "method": "deleteFriend", 
+    "params": {
+        "qq": ""
+    }
+}
+```
+
+所有`接口`调用必须携带`字符串`类型的`id`字段，且每次请求都应该使用不同的`id`，服务器返回结果会包含与调用时相同的`id`。`id`用于分辨返回的数据属于哪个调用
+
+### 接口返回
+
+无返回值的接口调用成功会返回仅包含`id`字段的对象：
+
+```js
+{
+    "id"    : "1024"
+}
+```
+
+有返回值的接口调用成功会返回包含`id`与`result`字段的对象，其中`result`字段类型与值视具体接口而定：
+
+```js
+{
+    "id"    : "1024"
+    "result": true
+}
+```
+
+接口调用发生错误会返回包含`id`与`error`字段的对象，其中`error`字段为字符串类型的错误信息：
+
+```js
+{
+    "id"   : "1024"
+    "error": "Unknown Method"
+}
+```
 
 ### API列表
 
