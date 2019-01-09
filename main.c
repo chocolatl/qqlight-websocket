@@ -28,9 +28,11 @@ char authCode[64];
 char pluginPath[1024];
 
 struct {
+    char address[64];
     u_short port;
     char path[256];
 } config = {
+    address: "127.0.0.1",
     port: 49632,
     path: "/"
 };
@@ -483,6 +485,7 @@ void createConfigFile(void) {
         }
         
         cJSON* root = cJSON_CreateObject();
+        cJSON_AddItemToObject(root, "address", cJSON_CreateString(config.address));
         cJSON_AddItemToObject(root, "port", cJSON_CreateNumber(config.port));
         cJSON_AddItemToObject(root, "path", cJSON_CreateString(config.path));
 
@@ -529,6 +532,7 @@ void readConfigFile(void) {
         return;
     }
 
+    cJSON* j_address = cJSON_GetObjectItem(json, "address");
     cJSON* j_port = cJSON_GetObjectItem(json, "port");
     cJSON* j_path = cJSON_GetObjectItem(json, "path");
     
@@ -539,6 +543,11 @@ void readConfigFile(void) {
     if(cJSON_IsString(j_path)) {
         strncpy(config.path, j_path->valuestring, sizeof(config.path) - 1);
         config.path[sizeof(config.path) - 1] = '\0';
+    }
+
+    if(cJSON_IsString(j_address)) {
+        strncpy(config.address, j_address->valuestring, sizeof(config.address) - 1);
+        config.address[sizeof(config.address) - 1] = '\0';
     }
 
     cJSON_Delete(json);
@@ -575,7 +584,7 @@ DllExport(int) Event_pluginStart(void) {
     createConfigFile();
     readConfigFile();
 
-    int result = serverStart(config.port, config.path);
+    int result = serverStart(config.address, config.port, config.path);
     
     if(result != 0) {
         pluginLog("Event_pluginStart", "WebSocket server startup failed");

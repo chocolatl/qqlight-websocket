@@ -285,7 +285,7 @@ void receiveComingData(const char* path) {
     goto receivingDataLoop;
 }
 
-int serverStart(u_short port, const char* path) {
+int serverStart(const char* address, u_short port, const char* path) {
 
     WSADATA wsaData;
     
@@ -299,7 +299,7 @@ int serverStart(u_short port, const char* path) {
     
     ZeroMemory(&sockAddr, sizeof(sockAddr));
     sockAddr.sin_family = PF_INET;
-    sockAddr.sin_addr.s_addr = inet_addr("0.0.0.0");
+    sockAddr.sin_addr.s_addr = inet_addr(address);
     sockAddr.sin_port = htons(port);
     
     serverSocket = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
