@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 #include <stdbool.h>
 #include <windef.h>
 #include <stdlib.h>
@@ -7,6 +8,26 @@
 #include "lib/sha1/sha1.h"
 #include "lib/base64/b64.h"
 #include "ws.h"
+
+// 不区分大小写的比较字符串，相等返回true
+bool stricasecmp(const char* a, const char* b) {
+  do {
+    if(*a == '\0' && *b == '\0')
+      return true;
+  } while(tolower(*a++) == tolower(*b++));
+
+  return false;
+}
+
+// 不区分大小写的比较字符串，n个字符内（包括n）相等返回true
+bool strnicasecmp(const char* a, const char* b, unsigned n) {
+  do {
+    if(n-- == 0 || (*a == '\0' && *b == '\0'))
+      return true;
+  } while(tolower(*a++) == tolower(*b++));
+
+  return false;
+}
 
 // 打印日志函数声明
 void pluginLog(const char* type, const char* format, ...);
@@ -406,29 +427,29 @@ char* verifyHandshakeHeaders(const char* str, size_t len) {
             break;
         }
 
-        if(_stricmp(a, "connection") == 0) {
+        if(stricasecmp(a, "connection")) {
 
             connection = true;
 
-        } else if (_stricmp(a, "upgrade") == 0) {
+        } else if (stricasecmp(a, "upgrade")) {
 
-            if(_stricmp(b, "websocket") != 0) {
+            if(!stricasecmp(b, "websocket")) {
                 pluginLog("verifyHandshakeHeaders", "Unexpected value '%s' of Upgrade filed", b);
                 break;
             }
 
             upgrade = true;
 
-        } else if (_stricmp(a, "Sec-WebSocket-Version") == 0) {
+        } else if (stricasecmp(a, "Sec-WebSocket-Version")) {
 
-            if(_stricmp(b, "13") != 0) {
+            if(!stricasecmp(b, "13")) {
                 pluginLog("verifyHandshakeHeaders", "Unexpected value '%s' of Sec-WebSocket-Version filed", b);
                 break;
             }
 
             version = true;
 
-        } else if (_stricmp(a, "Sec-WebSocket-Key") == 0) {
+        } else if (stricasecmp(a, "Sec-WebSocket-Key")) {
 
             if(!key) {
                 key = true;
@@ -470,7 +491,7 @@ int wsShakeHands(const char* recvBuff, int recvLen, SOCKET socket, const char* p
     char requestLine[512];
     sprintf(requestLine, "GET %s%s HTTP/1.1\r\n", (strlen(path) == 0 || path[0] != '/') ? "/" : "", path);
 
-    if(_strnicmp(resText, requestLine, strlen(requestLine)) != 0) {
+    if(!strnicasecmp(resText, requestLine, strlen(requestLine))) {
         send(socket, HTTP_400, strlen(HTTP_400), 0);
         pluginLog("wsShakeHands", "Unexpected request line");
         return -1;
