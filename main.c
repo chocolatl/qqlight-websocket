@@ -37,7 +37,9 @@ struct {
     path: "/"
 };
 
-void pluginLog(const char* type, const char* format, ...) {
+void pluginLog(const char* type, int level, const char* format, ...) {
+    if(level < 1) return;
+
 	char buff[512];
 	va_list arg;
 
@@ -120,7 +122,7 @@ void sendSuccessJSON(SOCKET socket, const char* idField, cJSON* resultField) {
 void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET socket) {
     
     // 注意，payload的文本数据不是以\0结尾
-    pluginLog("wsClientDataHandle","Payload data is %.*s", payloadLen > 128 ? 128 : (unsigned int)payloadLen, payload);
+    pluginLog("wsClientDataHandle", 0, "Payload data is %.*s", payloadLen > 128 ? 128 : (unsigned int)payloadLen, payload);
 
     const char* parseEnd;
 
@@ -129,7 +131,7 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET soc
     if(json == NULL) {
         const char *error_ptr = cJSON_GetErrorPtr();
         if (error_ptr != NULL) {
-            pluginLog("jsonParse", "Error before: %d", error_ptr - payload);
+            pluginLog("jsonParse", 1, "Error before: %d", error_ptr - payload);
         }
         return;
     }
@@ -199,7 +201,7 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET soc
     int         v_duration = e_duration ?  j_duration->valueint    :  -1;
     bool        v_enable   = e_enable   ?  cJSON_IsTrue(j_enable)  :  false;
  
-    pluginLog("jsonRPC", "Client call '%s' method", v_method);
+    pluginLog("jsonRPC", 0, "Client call '%s' method", v_method);
 
     #define PARAMS_CHECK(condition) if(!(condition)) {sendErrorJSON(socket, v_id, "Invalid Parameters"); goto RPCParseEnd;}
     #define METHOD_IS(name) (strcmp(name, v_method) == 0)
@@ -476,7 +478,7 @@ void createConfigFile(void) {
         FILE* fp = fopen(path, "wb");
         
         if(fp == NULL) {
-            pluginLog("createConfigFile", "Failed to open file");
+            pluginLog("createConfigFile", 1, "Failed to open file");
             return;
         }
         
@@ -504,7 +506,7 @@ void readConfigFile(void) {
     FILE* fp = fopen(path, "rb");
 
     if(fp == NULL) {
-        pluginLog("readConfigFile", "Failed to open file");
+        pluginLog("readConfigFile", 1, "Failed to open file");
         return;
     }
 
@@ -514,7 +516,7 @@ void readConfigFile(void) {
     
     char buff[size + 1];
     if(fread(buff, size, 1, fp) != 1) {
-        pluginLog("readConfigFile", "Failed to read file");
+        pluginLog("readConfigFile", 1, "Failed to read file");
         fclose(fp);
         return;
     }
@@ -522,7 +524,7 @@ void readConfigFile(void) {
     
     cJSON* json = cJSON_Parse(buff);
     if(json == NULL) {
-        pluginLog("readConfigFile", "Failed to parse json");
+        pluginLog("readConfigFile", 1, "Failed to parse json");
         cJSON_Delete(json);
         fclose(fp);
         return;
@@ -565,12 +567,12 @@ DllExport(int) Event_Initialization(void) {
 
     if(strlen(path) > sizeof(pluginPath) - 1) {
         pluginPath[0] = '\0';
-        pluginLog("Event_Initialization", "The plugin directory path length is too long");
+        pluginLog("Event_Initialization", 1, "The plugin directory path length is too long");
     } else {
         strcpy(pluginPath, path);
     }
 
-    pluginLog("Event_Initialization", "Plugin directory is %s", pluginPath);
+    pluginLog("Event_Initialization", 0, "Plugin directory is %s", pluginPath);
 
     return 0;
 }
@@ -583,12 +585,12 @@ DllExport(int) Event_pluginStart(void) {
     int result = serverStart(config.address, config.port, config.path);
     
     if(result != 0) {
-        pluginLog("Event_pluginStart", "WebSocket server startup failed");
+        pluginLog("Event_pluginStart", 1, "WebSocket server startup failed");
         const char* msg = UTF8ToGBK("WebSocket服务器启动失败，请尝试修改服务器监听端口并刷新插件重试");
         MessageBoxA(NULL, msg, "WebSocket Plugin", MB_OK | MB_ICONERROR);
         free((void*)msg);
     } else {
-        pluginLog("Event_pluginStart", "WebSocket server startup success");
+        pluginLog("Event_pluginStart", 1, "WebSocket server startup success");
     }
     
     return 0;
@@ -598,7 +600,7 @@ DllExport(int) Event_pluginStop(void) {
     
     serverStop();
     
-    pluginLog("Event_pluginStop", "WebSocket server stopped"); 
+    pluginLog("Event_pluginStop", 1, "WebSocket server stopped"); 
     
     return 0;
 }

@@ -30,7 +30,7 @@ bool strnicasecmp(const char* a, const char* b, unsigned n) {
 }
 
 // 打印日志函数声明
-void pluginLog(const char* type, const char* format, ...);
+void pluginLog(const char* type, int level, const char* format, ...);
 
 // 初始化帧结构
 void initWsFrameStruct(WsFrame* wsFrame) {
@@ -405,7 +405,7 @@ char* verifyHandshakeHeaders(const char* str, size_t len) {
     connection = upgrade = version = key = false;
 
     if(strcmp(str + len - 4, "\r\n\r\n") != 0) {
-        pluginLog("verifyHandshakeHeaders", "HTTP header does not end with '\\r\\n\\r\\n'");
+        pluginLog("verifyHandshakeHeaders", 1, "HTTP header does not end with '\\r\\n\\r\\n'");
         return NULL;
     }
     
@@ -418,12 +418,12 @@ char* verifyHandshakeHeaders(const char* str, size_t len) {
 
         const char* colon = strchr(cur1, ':');
         if(colon == NULL || colon >= cur2) {
-            pluginLog("verifyHandshakeHeaders", "Unexpected HTTP header");
+            pluginLog("verifyHandshakeHeaders", 1, "Unexpected HTTP header");
             break;
         }
 
         if(sscanf(cur1, "%[^:]:%s", a, b) != 2) {
-            pluginLog("verifyHandshakeHeaders", "HTTP header parsing failed");
+            pluginLog("verifyHandshakeHeaders", 1, "HTTP header parsing failed");
             break;
         }
 
@@ -434,7 +434,7 @@ char* verifyHandshakeHeaders(const char* str, size_t len) {
         } else if (stricasecmp(a, "upgrade")) {
 
             if(!stricasecmp(b, "websocket")) {
-                pluginLog("verifyHandshakeHeaders", "Unexpected value '%s' of Upgrade filed", b);
+                pluginLog("verifyHandshakeHeaders", 1, "Unexpected value '%s' of Upgrade filed", b);
                 break;
             }
 
@@ -443,7 +443,7 @@ char* verifyHandshakeHeaders(const char* str, size_t len) {
         } else if (stricasecmp(a, "Sec-WebSocket-Version")) {
 
             if(!stricasecmp(b, "13")) {
-                pluginLog("verifyHandshakeHeaders", "Unexpected value '%s' of Sec-WebSocket-Version filed", b);
+                pluginLog("verifyHandshakeHeaders", 1, "Unexpected value '%s' of Sec-WebSocket-Version filed", b);
                 break;
             }
 
@@ -462,7 +462,7 @@ char* verifyHandshakeHeaders(const char* str, size_t len) {
     }
 
     if(!(connection && upgrade && version && key)) {
-        pluginLog("verifyHandshakeHeaders", "Missing necessary fields");
+        pluginLog("verifyHandshakeHeaders", 1, "Missing necessary fields");
         if(key) free((void*)secKey);       // 释放申请的内存
         return NULL;
     }
@@ -479,7 +479,7 @@ int wsShakeHands(const char* recvBuff, int recvLen, SOCKET socket, const char* p
     // HTTP握手包太长，掐了
     if(recvLen > HTTP_MAXLEN) {
         send(socket, HTTP_400, strlen(HTTP_400), 0);
-        pluginLog("wsShakeHands", "Request too long");
+        pluginLog("wsShakeHands", 1, "Request too long");
         return -1;
     }
 
@@ -494,7 +494,7 @@ int wsShakeHands(const char* recvBuff, int recvLen, SOCKET socket, const char* p
     // 注：路径部分也被不区分大小写的比较
     if(!strnicasecmp(resText, requestLine, strlen(requestLine))) {
         send(socket, HTTP_400, strlen(HTTP_400), 0);
-        pluginLog("wsShakeHands", "Unexpected request line");
+        pluginLog("wsShakeHands", 1, "Unexpected request line");
         return -1;
     }
 
@@ -508,8 +508,8 @@ int wsShakeHands(const char* recvBuff, int recvLen, SOCKET socket, const char* p
     // 获取Sec-WebSocket-Accept
     char acptBuff[128];
     getSecWebSocketAcceptKey(secKey, acptBuff, sizeof(acptBuff));
-    pluginLog("wsShakeHands", "Sec-WebSocket-Key is '%s'", secKey);
-    pluginLog("wsShakeHands", "Sec-WebSocket-Accept is '%s'", acptBuff);
+    pluginLog("wsShakeHands", 0, "Sec-WebSocket-Key is '%s'", secKey);
+    pluginLog("wsShakeHands", 0, "Sec-WebSocket-Accept is '%s'", acptBuff);
     free((void*)secKey);   // 释放secKey
 
     // 协议升级
@@ -536,8 +536,8 @@ int wsShakeHands(const char* recvBuff, int recvLen, SOCKET socket, const char* p
         return -1;
     }
     
-    pluginLog("wsShakeHands", "Bytes sent: %d", iSendResult);
-    pluginLog("wsShakeHands", "WebSocket handshake succeeded");
+    pluginLog("wsShakeHands", 0, "Bytes sent: %d", iSendResult);
+    pluginLog("wsShakeHands", 1, "WebSocket handshake succeeded");
 
     return 0;
 }
