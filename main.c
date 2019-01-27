@@ -844,6 +844,13 @@ DllExport(int) Event_GetQQWalletData(
     return 0;
 }
 
+// 注：SDK示例中的确是updata而不是update
+DllExport(int) Event_UpdataCookies(void) {
+    const char* json = "{\"event\": \"updateCookies\"}";
+    wsFrameSendToAll(json, strlen(json), frameType_text);
+    return 0;
+}
+
 BOOL APIENTRY DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved) {
     
     if(loadQQLightAPI() != 0) {
