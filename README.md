@@ -694,6 +694,12 @@ type为`3`时，指机器人被邀请进群，这时`message`字段为空，可�
 
 其中`xxx`可以是图片`GUID`，也可以是图片URL，图片`GUID`可以通过调用[接口.上传图片](#接口上传图片)接口获得
 
+## 语言绑定
+
+插件提供了较为低级的接口，当使用其它语言调用时，通常需要根据语言特性进行封装以方便开发，下面是一些已有的语言绑定：
+
+- [qqlight-websocket-node](https://github.com/Chocolatl/qqlight-websocket-node) (Node.js, Chocolatl)
+
 ## 编译环境
 
 MinGW 3.4.5
