@@ -180,6 +180,7 @@ ws.on('message', data => {
 - [接口.全体禁言](#接口全体禁言)
 - [接口.获取Cookies](#接口获取Cookies)
 - [接口.获取Bkn](#接口获取Bkn)
+- [接口.获取ClientKey](#接口获取ClientKey)
 - [替换符.at](#替换符at)
 - [替换符.face/emoji](#替换符faceemoji)
 - [替换符.image/flash](#替换符imageflash)
@@ -660,6 +661,14 @@ type为`3`时，指机器人被邀请进群，这时`message`字段为空，可�
 ```js
 {
     "method": "getBkn"
+}
+```
+
+### 接口.获取ClientKey
+
+```js
+{
+    "method": "getClientKey"
 }
 ```
 
