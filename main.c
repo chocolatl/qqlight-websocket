@@ -456,6 +456,10 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET soc
 
         sendAcceptJSON(socket, v_id);
 
+    } else if (METHOD_IS("getCookies")) {
+
+        sendSuccessJSON(socket, v_id, cJSON_CreateString(QL_getCookies(authCode)));
+
     } else {
         sendErrorJSON(socket, v_id, "Unknown Method");
     }
