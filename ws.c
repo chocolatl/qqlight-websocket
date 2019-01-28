@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 #include <stdbool.h>
 #include <windef.h>
 #include <stdlib.h>
@@ -8,8 +9,28 @@
 #include "lib/base64/b64.h"
 #include "ws.h"
 
+// 不区分大小写的比较字符串，相等返回true
+bool stricasecmp(const char* a, const char* b) {
+  do {
+    if(*a == '\0' && *b == '\0')
+      return true;
+  } while(tolower(*a++) == tolower(*b++));
+
+  return false;
+}
+
+// 不区分大小写的比较字符串，n个字符内（包括n）相等返回true
+bool strnicasecmp(const char* a, const char* b, unsigned n) {
+  do {
+    if(n-- == 0 || (*a == '\0' && *b == '\0'))
+      return true;
+  } while(tolower(*a++) == tolower(*b++));
+
+  return false;
+}
+
 // 打印日志函数声明
-void pluginLog(const char* type, const char* format, ...);
+void pluginLog(const char* type, int level, const char* format, ...);
 
 // 初始化帧结构
 void initWsFrameStruct(WsFrame* wsFrame) {
@@ -384,7 +405,7 @@ char* verifyHandshakeHeaders(const char* str, size_t len) {
     connection = upgrade = version = key = false;
 
     if(strcmp(str + len - 4, "\r\n\r\n") != 0) {
-        pluginLog("verifyHandshakeHeaders", "HTTP header does not end with '\\r\\n\\r\\n'");
+        pluginLog("verifyHandshakeHeaders", 1, "HTTP header does not end with '\\r\\n\\r\\n'");
         return NULL;
     }
     
@@ -397,38 +418,38 @@ char* verifyHandshakeHeaders(const char* str, size_t len) {
 
         const char* colon = strchr(cur1, ':');
         if(colon == NULL || colon >= cur2) {
-            pluginLog("verifyHandshakeHeaders", "Unexpected HTTP header");
+            pluginLog("verifyHandshakeHeaders", 1, "Unexpected HTTP header");
             break;
         }
 
         if(sscanf(cur1, "%[^:]:%s", a, b) != 2) {
-            pluginLog("verifyHandshakeHeaders", "HTTP header parsing failed");
+            pluginLog("verifyHandshakeHeaders", 1, "HTTP header parsing failed");
             break;
         }
 
-        if(_stricmp(a, "connection") == 0) {
+        if(stricasecmp(a, "connection")) {
 
             connection = true;
 
-        } else if (_stricmp(a, "upgrade") == 0) {
+        } else if (stricasecmp(a, "upgrade")) {
 
-            if(_stricmp(b, "websocket") != 0) {
-                pluginLog("verifyHandshakeHeaders", "Unexpected value '%s' of Upgrade filed", b);
+            if(!stricasecmp(b, "websocket")) {
+                pluginLog("verifyHandshakeHeaders", 1, "Unexpected value '%s' of Upgrade filed", b);
                 break;
             }
 
             upgrade = true;
 
-        } else if (_stricmp(a, "Sec-WebSocket-Version") == 0) {
+        } else if (stricasecmp(a, "Sec-WebSocket-Version")) {
 
-            if(_stricmp(b, "13") != 0) {
-                pluginLog("verifyHandshakeHeaders", "Unexpected value '%s' of Sec-WebSocket-Version filed", b);
+            if(!stricasecmp(b, "13")) {
+                pluginLog("verifyHandshakeHeaders", 1, "Unexpected value '%s' of Sec-WebSocket-Version filed", b);
                 break;
             }
 
             version = true;
 
-        } else if (_stricmp(a, "Sec-WebSocket-Key") == 0) {
+        } else if (stricasecmp(a, "Sec-WebSocket-Key")) {
 
             if(!key) {
                 key = true;
@@ -441,7 +462,7 @@ char* verifyHandshakeHeaders(const char* str, size_t len) {
     }
 
     if(!(connection && upgrade && version && key)) {
-        pluginLog("verifyHandshakeHeaders", "Missing necessary fields");
+        pluginLog("verifyHandshakeHeaders", 1, "Missing necessary fields");
         if(key) free((void*)secKey);       // 释放申请的内存
         return NULL;
     }
@@ -458,7 +479,7 @@ int wsShakeHands(const char* recvBuff, int recvLen, SOCKET socket, const char* p
     // HTTP握手包太长，掐了
     if(recvLen > HTTP_MAXLEN) {
         send(socket, HTTP_400, strlen(HTTP_400), 0);
-        pluginLog("wsShakeHands", "Request too long");
+        pluginLog("wsShakeHands", 1, "Request too long");
         return -1;
     }
 
@@ -470,9 +491,10 @@ int wsShakeHands(const char* recvBuff, int recvLen, SOCKET socket, const char* p
     char requestLine[512];
     sprintf(requestLine, "GET %s%s HTTP/1.1\r\n", (strlen(path) == 0 || path[0] != '/') ? "/" : "", path);
 
-    if(_strnicmp(resText, requestLine, strlen(requestLine)) != 0) {
+    // 注：路径部分也被不区分大小写的比较
+    if(!strnicasecmp(resText, requestLine, strlen(requestLine))) {
         send(socket, HTTP_400, strlen(HTTP_400), 0);
-        pluginLog("wsShakeHands", "Unexpected request line");
+        pluginLog("wsShakeHands", 1, "Unexpected request line");
         return -1;
     }
 
@@ -486,8 +508,8 @@ int wsShakeHands(const char* recvBuff, int recvLen, SOCKET socket, const char* p
     // 获取Sec-WebSocket-Accept
     char acptBuff[128];
     getSecWebSocketAcceptKey(secKey, acptBuff, sizeof(acptBuff));
-    pluginLog("wsShakeHands", "Sec-WebSocket-Key is '%s'", secKey);
-    pluginLog("wsShakeHands", "Sec-WebSocket-Accept is '%s'", acptBuff);
+    pluginLog("wsShakeHands", 0, "Sec-WebSocket-Key is '%s'", secKey);
+    pluginLog("wsShakeHands", 0, "Sec-WebSocket-Accept is '%s'", acptBuff);
     free((void*)secKey);   // 释放secKey
 
     // 协议升级
@@ -514,8 +536,8 @@ int wsShakeHands(const char* recvBuff, int recvLen, SOCKET socket, const char* p
         return -1;
     }
     
-    pluginLog("wsShakeHands", "Bytes sent: %d", iSendResult);
-    pluginLog("wsShakeHands", "WebSocket handshake succeeded");
+    pluginLog("wsShakeHands", 0, "Bytes sent: %d", iSendResult);
+    pluginLog("wsShakeHands", 1, "WebSocket handshake succeeded");
 
     return 0;
 }

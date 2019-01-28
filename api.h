@@ -44,5 +44,8 @@ EXTERN void __stdcall (*QL_handleGroupRequest)(const char* group, const char* qq
 EXTERN void __stdcall (*QL_kickGroupMember)(const char* group, const char* qq, bool permanent, const char* authCode);
 EXTERN void __stdcall (*QL_silence)(const char* group, const char* qq, int duration, const char* authCode);
 EXTERN void __stdcall (*QL_globalSilence)(const char* group, bool enable, const char* authCode);
+EXTERN const char* __stdcall (*QL_getCookies)(const char* authCode);
+EXTERN const char* __stdcall (*QL_getBkn)(const char* authCode);
+EXTERN const char* __stdcall (*QL_getClientKey)(const char* authCode);
 
 #endif

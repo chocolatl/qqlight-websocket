@@ -18,7 +18,7 @@ typedef struct {
 void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET socket);
 
 // 打印日志函数声明
-void pluginLog(const char* type, const char* format, ...);
+void pluginLog(const char* type, int level, const char* format, ...);
 
 #define MAX_CLIENT_NUM FD_SETSIZE
 static struct {
@@ -38,11 +38,11 @@ int wsFrameSend(SOCKET socket, const char* buff, int len, FrameType type) {
     int iSendResult = send(socket, frame, newLen, 0);
 
     if(iSendResult == SOCKET_ERROR) {
-        pluginLog("wsFrameSend", "Send failed: %d", WSAGetLastError());
+        pluginLog("wsFrameSend", 1, "Send failed: %d", WSAGetLastError());
         goto wsFrameSendEnd;
     }
 
-    pluginLog("wsFrameSend", "Bytes sent: %d", iSendResult);
+    pluginLog("wsFrameSend", 0, "Bytes sent: %d", iSendResult);
     
     wsFrameSendEnd:    
     free((void*)frame);
@@ -53,7 +53,7 @@ int wsFrameSend(SOCKET socket, const char* buff, int len, FrameType type) {
 void wsFrameSendToAll(const char* buff, int len,  FrameType type) {
     for(int i = 0; i < clientSockets.total; i++) {
         if(clientSockets.clients[i].protocol == websocketProtocol) {
-            pluginLog("wsFrameSendToAll", "Send data to %dst client", i);
+            pluginLog("wsFrameSendToAll", 0, "Send data to %dst client", i);
             wsFrameSend(clientSockets.clients[i].socket, buff, len, type);
         }
     }
@@ -70,22 +70,22 @@ int wsClientDataHandle(const char* recvBuff, int recvLen, Client* client) {
 
     int consume = readWebSocketFrameStream(wsFrame, recvBuff, recvLen);
 
-    pluginLog("wsClientDataHandle", "Consume %d bytes of data in %d bytes", consume, recvLen);
-    pluginLog("wsClientDataHandle", "wsFrame->state is %d", wsFrame->state);
+    pluginLog("wsClientDataHandle", 0, "Consume %d bytes of data in %d bytes", consume, recvLen);
+    pluginLog("wsClientDataHandle", 0, "wsFrame->state is %d", wsFrame->state);
 
     if(wsFrame->state == frameState_success) {
 
-        pluginLog("wsClientDataHandle", "Header and payload lengths are %llu and %llu", wsFrame->headerLen, wsFrame->payloadLen);
+        pluginLog("wsClientDataHandle", 0, "Header and payload lengths are %llu and %llu", wsFrame->headerLen, wsFrame->payloadLen);
 
         // 暂时不处理多帧数据，遇到多帧数据关闭连接
         if(wsFrame->FIN == 0) {
-            pluginLog("wsClientDataHandle", "This is not the final fragment in a message");
+            pluginLog("wsClientDataHandle", 1, "This is not the final fragment in a message");
             return -1;
         }
 
         // 客户端希望关闭连接
         if(wsFrame->frameType == frameType_connectionClose) {
-            pluginLog("wsClientDataHandle", "Connection close frame");
+            pluginLog("wsClientDataHandle", 1, "Connection close frame");
             return -1;
         }
 
@@ -94,7 +94,7 @@ int wsClientDataHandle(const char* recvBuff, int recvLen, Client* client) {
            wsFrame->frameType == frameType_pong        ||
            wsFrame->frameType == frameType_continuation
         ) {
-            pluginLog("wsClientDataHandle", "Unexpected frame type");
+            pluginLog("wsClientDataHandle", 1, "Unexpected frame type");
             return -1;
         }
 
@@ -110,7 +110,7 @@ int wsClientDataHandle(const char* recvBuff, int recvLen, Client* client) {
 
         // 心跳
         if(wsFrame->frameType == frameType_ping) {
-            pluginLog("wsClientDataHandle", "pong");
+            pluginLog("wsClientDataHandle", 0, "pong");
             wsFrameSend(client->socket, payload, payloadLen, frameType_pong);
         }
 
@@ -159,7 +159,7 @@ void removeClient(int pos) {
     setsockopt(socket, SOL_SOCKET, SO_LINGER, (const char*)&so_linger, sizeof(so_linger));
     closesocket(socket);
 
-    pluginLog("removeClient", "Client socket closed, now length of clients: %d", clientSockets.total);
+    pluginLog("removeClient", 1, "Client socket closed, now length of clients: %d", clientSockets.total);
 }
 
 void receiveConnect(void) {
@@ -178,7 +178,7 @@ void receiveConnect(void) {
     
     if(clientSocket != INVALID_SOCKET) {
 
-        pluginLog("receiveConnect", "Accepted client: %s:%d", inet_ntoa(client.sin_addr), ntohs(client.sin_port));
+        pluginLog("receiveConnect", 1, "Accepted client: %s:%d", inet_ntoa(client.sin_addr), ntohs(client.sin_port));
         
         clientSockets.clients[clientSockets.total].socket = clientSocket;
         clientSockets.clients[clientSockets.total].protocol = socketProtocol;
@@ -192,7 +192,7 @@ void receiveConnect(void) {
     // serverSocket不是一个套接字，即已经调用了serverStop，执行了closesocket(serverSocket)
     if(errCode == WSAENOTSOCK) {
         
-        pluginLog("receiveConnect", "Closing all client sockets...");
+        pluginLog("receiveConnect", 1, "Closing all client sockets...");
 
         // 关闭所有客户端连接 
         for(int i = 0; i < clientSockets.total; i++) {
@@ -200,11 +200,11 @@ void receiveConnect(void) {
         }
         clientSockets.total = 0;
         
-        pluginLog("receiveConnect", "Threads will exit");
+        pluginLog("receiveConnect", 1, "Threads will exit");
         ExitThread(0);     // 退出 
     }
     
-    pluginLog("receiveConnect", "Accept failed: %d", errCode);
+    pluginLog("receiveConnect", 1, "Accept failed: %d", errCode);
 }
 
 void receiveComingData(const char* path) {
@@ -248,7 +248,7 @@ void receiveComingData(const char* path) {
 
         if(iResult > 0) {
             
-            pluginLog("receiveComingData", "Bytes received: %d", iResult);
+            pluginLog("receiveComingData", 0, "Bytes received: %d", iResult);
             
             // 协议升级
             if(client->protocol == socketProtocol) {
@@ -272,10 +272,10 @@ void receiveComingData(const char* path) {
 
             if(iResult == 0) {
                 // 客户端礼貌的关闭连接 
-                pluginLog("receiveComingData", "Connection closing...");
+                pluginLog("receiveComingData", 1, "Connection closing...");
             } else {
                 // 客户端异常关闭连接等情况
-                pluginLog("receiveComingData", "Recv failed: %d", WSAGetLastError());
+                pluginLog("receiveComingData", 1, "Recv failed: %d", WSAGetLastError());
             }
             
             removeClient(i--);
@@ -285,13 +285,13 @@ void receiveComingData(const char* path) {
     goto receivingDataLoop;
 }
 
-int serverStart(u_short port, const char* path) {
+int serverStart(const char* address, u_short port, const char* path) {
 
     WSADATA wsaData;
     
     int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
     if(iResult != 0) {
-        pluginLog("ServerStart", "WSAStartup failed");
+        pluginLog("ServerStart", 1, "WSAStartup failed");
         return -1;
     }
     
@@ -299,26 +299,26 @@ int serverStart(u_short port, const char* path) {
     
     ZeroMemory(&sockAddr, sizeof(sockAddr));
     sockAddr.sin_family = PF_INET;
-    sockAddr.sin_addr.s_addr = inet_addr("0.0.0.0");
+    sockAddr.sin_addr.s_addr = inet_addr(address);
     sockAddr.sin_port = htons(port);
     
     serverSocket = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
     
     if(serverSocket == INVALID_SOCKET) {
-        pluginLog("ServerStart", "Error at socket(): %d", WSAGetLastError());
+        pluginLog("ServerStart", 1, "Error at socket(): %d", WSAGetLastError());
         WSACleanup();
         return -1;
     }
     
     if(bind(serverSocket, (SOCKADDR*)&sockAddr, sizeof(SOCKADDR)) == SOCKET_ERROR) {
-        pluginLog("ServerStart","Bind failed with error: %d", WSAGetLastError());
+        pluginLog("ServerStart", 1, "Bind failed with error: %d", WSAGetLastError());
         closesocket(serverSocket);
         WSACleanup();
         return -1;
     }
     
     if(listen(serverSocket, SOMAXCONN) == SOCKET_ERROR) {
-        pluginLog("ServerStart", "Listen failed with error: %d", WSAGetLastError());
+        pluginLog("ServerStart", 1, "Listen failed with error: %d", WSAGetLastError());
         closesocket(serverSocket);
         WSACleanup();
         return -1;
