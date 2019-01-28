@@ -13,6 +13,10 @@
 
 插件启动后默认监听`49632`端口，在本机可以使用WebSocket客户端通过URL`ws://localhost:49632/`连接服务器
 
+### 从0.x.x升级到1.x.x
+
+如果你正在使用插件的旧版本（0.x.x），需要升级到当前版本（1.x.x），除了替换插件之外，还要在重启插件之前删除旧的配置文件`plugin/websocket.protocol/config.json`
+
 ### 配置
 
 第一次启动插件后会在插件数据目录`plugin/websocket.protocol`中生成`config.json`文件，里面提供了一些插件配置项
