@@ -654,7 +654,7 @@ DllExport(int) Event_GetNewMsg (
     return 0;    // 返回0下个插件继续处理该事件，返回1拦截此事件不让其他插件执行
 }
 
-DllExport(int) Event_AddFrinend(const char* qq, const char* message) {
+DllExport(int) Event_AddFriend(const char* qq, const char* message) {
 
     const char* u8Message = GBKToUTF8(message);
 
