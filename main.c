@@ -864,9 +864,12 @@ DllExport(int) Event_UpdataCookies(void) {
 }
 
 BOOL APIENTRY DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved) {
-    
-    if(loadQQLightAPI() != 0) {
-        MessageBox(NULL, "The message.dll load failed", "error", MB_OK);
+    int errorLine;
+    char message[256];
+
+    if(loadQQLightAPI(&errorLine) != 0) {
+        sprintf(message, "The message.dll load failed. l=%d", errorLine);
+        MessageBox(NULL, message, "error", MB_OK);
         return FALSE;
     }
     

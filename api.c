@@ -4,10 +4,11 @@
 #include "api.h"
 #undef DEFINE_QL_API
 
+int errorLine;
 bool isLoaded = false;
 HMODULE libHandle;
 
-int loadQQLightAPI(void) {
+int loadQQLightAPI(int* pErrorLine) {
 
     // 一个玄学问题，不加Sleep(1)，只有一个插件时，插件刷新时会崩溃
     Sleep(1);
@@ -18,7 +19,7 @@ int loadQQLightAPI(void) {
         return -1;
     }
 
-    #define GET_DLL_FUNC(dname, ename) if((dname = GetProcAddress(libHandle, ename)) == NULL) goto laodFuncError;
+    #define GET_DLL_FUNC(dname, ename) if((dname = GetProcAddress(libHandle, ename)) == NULL) { errorLine = __LINE__; goto laodFuncError; }
 
     GET_DLL_FUNC(QL_getPluginPath, "Api_GetPath");
     GET_DLL_FUNC(QL_printLog, "Api_SendLog");
@@ -57,5 +58,6 @@ int loadQQLightAPI(void) {
 
     laodFuncError:
     FreeLibrary(libHandle);
+    *pErrorLine = errorLine;
     return -1;
 }

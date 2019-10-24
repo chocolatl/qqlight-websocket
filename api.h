@@ -13,7 +13,7 @@
 #define QLWS_API_H
 
 // loadQQLightAPI 
-EXTERN int loadQQLightAPI(void);
+EXTERN int loadQQLightAPI(int* pErrorLine);
 
 // QQLight API 
 EXTERN const char* __stdcall (*QL_getPluginPath)(const char* authCode);
