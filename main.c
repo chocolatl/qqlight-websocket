@@ -464,10 +464,6 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET soc
         
         sendSuccessJSON(socket, v_id, cJSON_CreateString(QL_getBkn(authCode)));
 
-    } else if (METHOD_IS("getClientKey")) {
-        
-        sendSuccessJSON(socket, v_id, cJSON_CreateString(QL_getClientKey(authCode)));
-
     } else {
         sendErrorJSON(socket, v_id, "Unknown Method");
     }
