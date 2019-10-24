@@ -3,19 +3,20 @@
 [![release](https://img.shields.io/github/release/Chocolatl/qqlight-websocket.svg)](https://github.com/Chocolatl/qqlight-websocket/releases)
 [![license](https://img.shields.io/badge/license-GLWT-green.svg)](https://github.com/Chocolatl/qqlight-websocket/blob/master/LICENSE)
 
-[QQLight机器人](http://www.52chat.cc/)（原Amanda QQ）框架的WebSocket-RPC插件
+[QQLight机器人](http://www.52chat.cc/)框架的WebSocket-RPC插件
 
 插件通过WebSocket与JSON实现远程过程调用，让你能使用任何喜欢的语言编写QQ机器人程序
+
+[QQLight2.3.5插件下载地址](https://github.com/Chocolatl/qqlight-websocket/releases/download/v1.0.1/websocket.protocol.plugin.dll.zip)
+[QQLight2.3.5插件文档地址](https://github.com/Chocolatl/qqlight-websocket/tree/v1.0.1)
+
+[QQLight3.0.0插件下载地址](https://github.com/Chocolatl/qqlight-websocket/releases/download/v2.0.1/websocket.protocol.ql.dll.zip)
 
 ## 使用方法
 
 将插件复制到QQLight机器人框架的`plugin`目录中，运行QQLight机器人并在插件管理中启用插件
 
 插件启动后默认监听`49632`端口，在本机可以使用WebSocket客户端通过URL`ws://localhost:49632/`连接服务器
-
-### 从0.x.x升级到1.x.x
-
-如果你正在使用插件的旧版本（0.x.x），需要升级到当前版本（1.x.x），除了替换插件之外，还要在重启插件之前删除旧的配置文件`plugin/websocket.protocol/config.json`
 
 ### 配置
 
@@ -305,14 +306,6 @@ type为`3`时，指机器人被邀请进群，这时`message`字段为空，可�
         "message"   : "",       // 转账备注消息
         "id"        : ""        // 转账订单号
     }
-}
-```
-
-### 事件.Cookies更新
-
-```js
-{
-    "event": "updateCookies"
 }
 ```
 
@@ -664,14 +657,6 @@ type为`3`时，指机器人被邀请进群，这时`message`字段为空，可�
 ```js
 {
     "method": "getBkn"
-}
-```
-
-### 接口.获取ClientKey
-
-```js
-{
-    "method": "getClientKey"
 }
 ```
 
