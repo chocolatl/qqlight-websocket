@@ -1,4 +1,4 @@
-dllname = websocket.protocol.plugin
+dllname = websocket.protocol.ql
 
 $(dllname).dll: main.c server.o ws.o api.o cjson.o sha1.o b64_encode.o b64_decode.o
 	gcc -o $(dllname).o main.c -c -std=c99

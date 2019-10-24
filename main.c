@@ -12,19 +12,19 @@
 
 #define DllExport(returnType) __declspec(dllexport) returnType __stdcall
 
-const char* PLUGIN_INFO = 
-    "pluginID=websocket.protocol;\r\n"
-    "pluginName=WebSocket Protocol;\r\n"
-    "pluginBrief="
-        "Enable you to use QQLight API in any language you like via WebSocket.\r\n\r\n"
-        "GitHub:\r\nhttps://github.com/Chocolatl/qqlight-websocket;\r\n"
-    "pluginVersion=1.0.1;\r\n"
-    "pluginSDK=3;\r\n"
-    "pluginAuthor=Chocolatl;\r\n"
-    "pluginWindowsTitle=;"
-;
+const char* PLUGIN_INFO = "{"
+    "\"plugin_id\":\"websocket.protocol\",\r\n"
+    "\"plugin_name\":\"WebSocket Protocol\",\r\n"
+    "\"plugin_author\":\"Chocolatl\",\r\n"
+    "\"plugin_version\":\"2.0.0\",\r\n"
+    "\"plugin_brief\":"
+        "\"Enable you to use QQLight API in any language you like via WebSocket.\\r\\r"
+        "GitHub:\\rhttps://github.com/Chocolatl/qqlight-websocket\",\r\n"
+    "\"plugin_sdk\":\"1\",\r\n"
+    "\"plugin_menu\":\"false\""
+"}";
 
-char authCode[64];
+int authCode;
 char pluginPath[1024];
 
 struct {
@@ -565,9 +565,9 @@ void readConfigFile(void) {
 }
 
 DllExport(const char*) Information(const char* _authCode) {
-    
+
     // 获取authCode
-    strncpy(authCode, _authCode, sizeof(authCode) - 1);
+    authCode = _authCode;
     
     return PLUGIN_INFO;
 }
