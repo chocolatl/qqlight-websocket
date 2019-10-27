@@ -674,12 +674,16 @@ DllExport(int) Event_AddFriend(const char* qq, const char* message) {
     return 0;
 }
 
-DllExport(int) Event_BecomeFriends(const char* qq) {
+DllExport(int) Event_FriendChange(
+    int type,           // 1.成为好友（单向） 2.成为好友（双向） 3、被删除好友
+    const char* qq
+) {
 
     cJSON* root = cJSON_CreateObject();
-    cJSON_AddItemToObject(root, "event", cJSON_CreateString("becomeFriends"));
+    cJSON_AddItemToObject(root, "event", cJSON_CreateString("friendChange"));
 
     cJSON* params = cJSON_CreateObject();
+    cJSON_AddItemToObject(params, "type", cJSON_CreateNumber(type));
     cJSON_AddItemToObject(params, "qq", cJSON_CreateString(qq));
 
     cJSON_AddItemToObject(root, "params", params);
