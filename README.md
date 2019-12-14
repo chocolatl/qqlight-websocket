@@ -10,7 +10,7 @@
 [QQLight2.3.5插件下载地址](https://github.com/Chocolatl/qqlight-websocket/releases/download/v1.0.1/websocket.protocol.plugin.dll.zip)
 [QQLight2.3.5插件文档地址](https://github.com/Chocolatl/qqlight-websocket/tree/v1.0.1)
 
-[QQLight3.0.0插件下载地址](https://github.com/Chocolatl/qqlight-websocket/releases/download/v2.1.1/websocket.protocol.ql.dll.zip)
+[QQLight3.0.0插件下载地址](https://github.com/Chocolatl/qqlight-websocket/releases/download/v2.2.0/websocket.protocol.ql.dll.zip)
 
 ## 使用方法
 
