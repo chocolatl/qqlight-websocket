@@ -174,6 +174,7 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET soc
     const cJSON* j_seq      = cJSON_GetObjectItemCaseSensitive(j_params, "seq");
     const cJSON* j_duration = cJSON_GetObjectItemCaseSensitive(j_params, "duration");
     const cJSON* j_enable   = cJSON_GetObjectItemCaseSensitive(j_params, "enable");
+    const cJSON* j_cache    = cJSON_GetObjectItemCaseSensitive(j_params, "cache");
 
     const cJSON_bool e_type     = cJSON_IsNumber(j_type);
     const cJSON_bool e_group    = cJSON_IsString(j_group);
@@ -187,6 +188,7 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET soc
     const cJSON_bool e_seq      = cJSON_IsString(j_seq);
     const cJSON_bool e_duration = cJSON_IsNumber(j_duration);
     const cJSON_bool e_enable   = cJSON_IsBool(j_enable);
+    const cJSON_bool e_cache    = cJSON_IsBool(j_cache);
 
     int         v_type     = e_type     ?  j_type->valueint        :  -1;
     const char* v_group    = e_group    ?  j_group->valuestring    :  NULL;
@@ -200,6 +202,7 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET soc
     const char* v_seq      = e_seq      ?  j_seq->valuestring      :  NULL;
     int         v_duration = e_duration ?  j_duration->valueint    :  -1;
     bool        v_enable   = e_enable   ?  cJSON_IsTrue(j_enable)  :  false;
+    bool        v_cache    = e_cache    ?  cJSON_IsTrue(j_cache)   :  false;
  
     pluginLog("jsonRPC", 0, "Client call '%s' method", v_method);
 
@@ -226,7 +229,7 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET soc
 
     } else if (METHOD_IS("getFriendList")) {
 
-        const char* friendList = GBKToUTF8(QL_getFriendList(authCode));
+        const char* friendList = GBKToUTF8(QL_getFriendList(v_cache, authCode));
 
         sendSuccessJSON(socket, v_id, cJSON_Parse(friendList));
 
@@ -256,7 +259,7 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET soc
 
     } else if (METHOD_IS("getGroupList")) {
 
-        const char* groupList = GBKToUTF8(QL_getGroupList(authCode));
+        const char* groupList = GBKToUTF8(QL_getGroupList(v_cache, authCode));
 
         sendSuccessJSON(socket, v_id, cJSON_Parse(groupList));
 
@@ -266,7 +269,7 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET soc
 
         PARAMS_CHECK(e_group);
 
-        const char* groupMemberList = GBKToUTF8(QL_getGroupMemberList(v_group, authCode));
+        const char* groupMemberList = GBKToUTF8(QL_getGroupMemberList(v_group, v_cache, authCode));
 
         sendSuccessJSON(socket, v_id, cJSON_Parse(groupMemberList));
 

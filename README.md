@@ -342,7 +342,10 @@ type为`3`时，指机器人被邀请进群，这时`message`字段为空，可�
 
 ```js
 {
-    "method" : "getFriendList"
+    "method" : "getFriendList",
+    "params": {
+        "cache": true       // 是否缓存结果
+    }
 }
 ```
 
@@ -377,7 +380,10 @@ type为`3`时，指机器人被邀请进群，这时`message`字段为空，可�
 
 ```js
 {
-    "method": "getGroupList"
+    "method": "getGroupList",
+    "params": {
+        "cache": true       // 是否缓存结果
+    }
 }
 ```
 
@@ -387,7 +393,8 @@ type为`3`时，指机器人被邀请进群，这时`message`字段为空，可�
 {
     "method": "getGroupMemberList",
     "params": {
-        "group": ""
+        "group": "",
+        "cache": true       // 是否缓存结果
     }
 }
 ```
