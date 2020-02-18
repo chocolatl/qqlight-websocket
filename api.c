@@ -51,6 +51,7 @@ int loadQQLightAPI(int* pErrorLine) {
     GET_DLL_FUNC(QL_globalSilence, "Api_BanGroup");
     GET_DLL_FUNC(QL_getCookies, "Api_GetCookies");
     GET_DLL_FUNC(QL_getBkn, "Api_Getbkn");
+    GET_DLL_FUNC(QL_getBkn, "Api_Getbkn_Long");
 
     isLoaded = true;
     return 0;
