@@ -7,7 +7,7 @@
 
 插件通过WebSocket与JSON实现远程过程调用，让你能使用任何喜欢的语言编写QQ机器人程序
 
-[插件下载地址](https://github.com/Chocolatl/qqlight-websocket/releases/download/v2.2.0/websocket.protocol.ql.dll.zip)
+[插件下载地址](https://github.com/Chocolatl/qqlight-websocket/releases/latest/download/websocket.protocol.ql.dll.zip)
 
 ## 使用方法
 
