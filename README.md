@@ -662,7 +662,17 @@ type为`3`时，指机器人被邀请进群，这时`message`字段为空，可�
 
 ```js
 {
-    "method": "getBkn"
+    "method": "getBkn",
+    "cookies": ""
+}
+```
+
+### 接口.获取长Bkn
+
+```js
+{
+    "method": "getBknLong",
+    "cookies": ""
 }
 ```
 
