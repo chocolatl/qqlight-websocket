@@ -306,7 +306,7 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET soc
 
         const char* groupCard = GBKToUTF8(QL_getGroupCard(v_group, v_qq, authCode));
 
-        sendSuccessJSON(socket, v_id, cJSON_Parse(groupCard));
+        sendSuccessJSON(socket, v_id, cJSON_CreateString(groupCard));
 
         free((void*)groupCard);
 
