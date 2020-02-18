@@ -378,9 +378,13 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET soc
 
         PARAMS_CHECK(e_content);
 
-        QL_setSignature(v_content, authCode);
+        const char* content = UTF8ToGBK(v_content);
+
+        QL_setSignature(content, authCode);
 
         sendAcceptJSON(socket, v_id);
+
+        free((void*)content);
 
     } else if (METHOD_IS("getNickname")) {
 
