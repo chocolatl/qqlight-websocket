@@ -396,6 +396,18 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET soc
 
         free((void*)nickname);
 
+    } else if (METHOD_IS("setNickname")) {
+
+        PARAMS_CHECK(e_name);
+
+        const char* nickname = UTF8ToGBK(v_name);
+
+        QL_setNickname(nickname, authCode);
+
+        sendAcceptJSON(socket, v_id);
+
+        free((void*)nickname);
+
     } else if (METHOD_IS("getPraiseCount")) {
 
         PARAMS_CHECK(e_qq);

@@ -36,6 +36,7 @@ EXTERN void __stdcall (*QL_setGroupCard)(const char* group, const char* qq, cons
 EXTERN const char* __stdcall (*QL_getLoginAccount)(const char* authCode);
 EXTERN void __stdcall (*QL_setSignature)(const char* content, const char* authCode);
 EXTERN const char* __stdcall (*QL_getNickname)(const char* qq, const char* authCode);
+EXTERN const char* __stdcall (*QL_setNickname)(const char* name, const char* authCode);
 EXTERN const char* __stdcall (*QL_getPraiseCount)(const char* qq, const char* authCode);
 EXTERN void __stdcall (*QL_givePraise)(const char* qq, const char* authCode);
 EXTERN void __stdcall (*QL_handleFriendRequest)(const char* qq, int type, const char* message, const char* authCode);
