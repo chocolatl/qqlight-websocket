@@ -495,6 +495,7 @@ int wsShakeHands(const char* recvBuff, int recvLen, SOCKET socket, const char* p
     if(!strnicasecmp(resText, requestLine, strlen(requestLine))) {
         send(socket, HTTP_400, strlen(HTTP_400), 0);
         pluginLog("wsShakeHands", 1, "Unexpected request line");
+        pluginLog("wsShakeHands", 1, resText);
         return -1;
     }
 
