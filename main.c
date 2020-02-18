@@ -358,9 +358,13 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET soc
 
         PARAMS_CHECK(e_qq && e_group && e_name);
 
-        QL_setGroupCard(v_group, v_qq, v_name, authCode);
+        const char* name = UTF8ToGBK(v_name);
+
+        QL_setGroupCard(v_group, v_qq, name, authCode);
 
         sendAcceptJSON(socket, v_id);
+
+        free((void*)name);
 
     } else if (METHOD_IS("getLoginAccount")) {
 
