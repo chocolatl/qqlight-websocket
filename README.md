@@ -183,6 +183,7 @@ ws.on('message', data => {
 - [接口.获取Cookies](#接口获取Cookies)
 - [接口.获取Bkn](#接口获取Bkn)
 - [接口.获取长Bkn](#接口获取长Bkn)
+- [接口.发表空间说说](#接口发表空间说说)
 - [替换符.at](#替换符at)
 - [替换符.face/emoji](#替换符faceemoji)
 - [替换符.image/flash](#替换符imageflash)
@@ -687,6 +688,19 @@ type为`3`时，指机器人被邀请进群，这时`message`字段为空，可�
     "cookies": ""
 }
 ```
+
+### 接口.发表空间说说
+
+```js
+{
+    "method": "sendQzone", 
+    "params": {
+        "content" : ""      // 内容，发送到空间说说的内容，目前仅支持文本内容
+    }
+}
+```
+
+无返回值
 
 ### 替换符.at
 
