@@ -226,11 +226,13 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET soc
 
         PARAMS_CHECK(e_content);
 
-        const char* gbkZoneText = UTF8ToGBK(v_content);
+        const char* result = GBKToUTF8(QL_sendQzone(UTF8ToGBK(v_content), authCode));
 
-        QL_sendQzone(gbkZoneText, authCode);
+        pluginLog("readConfigFile", 1, "sendQzone result:'%s'" , cJSON_CreateString(result));
 
-        sendAcceptJSON(socket, v_id);
+        sendSuccessJSON(socket, v_id, cJSON_CreateString(result));
+
+        free((void*)result);
 
     } else if (METHOD_IS("withdrawMessage")) {
 
