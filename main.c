@@ -228,8 +228,6 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET soc
 
         const char* result = GBKToUTF8(QL_sendQzone(UTF8ToGBK(v_content), authCode));
 
-        pluginLog("readConfigFile", 1, "sendQzone result:'%s'" , cJSON_CreateString(result));
-
         sendSuccessJSON(socket, v_id, cJSON_CreateString(result));
 
         free((void*)result);
