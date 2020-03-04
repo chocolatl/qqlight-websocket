@@ -48,5 +48,6 @@ EXTERN void __stdcall (*QL_globalSilence)(const char* group, bool enable, const 
 EXTERN const char* __stdcall (*QL_getCookies)(const char* authCode);
 EXTERN const char* __stdcall (*QL_getBkn)(const char* cookies, const char* authCode);
 EXTERN const char* __stdcall (*QL_getBkn_Long)(const char* cookies, const char* authCode);
+EXTERN const char* __stdcall (*QL_sendQzone)(const char* content, const char* authCode);
 
 #endif

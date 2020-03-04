@@ -16,7 +16,7 @@ const char* PLUGIN_INFO = "{"
     "\"plugin_id\":\"websocket.protocol\",\r\n"
     "\"plugin_name\":\"WebSocket Protocol\",\r\n"
     "\"plugin_author\":\"Chocolatl\",\r\n"
-    "\"plugin_version\":\"2.3.0\",\r\n"
+    "\"plugin_version\":\"2.4.0\",\r\n"
     "\"plugin_brief\":"
         "\"Enable you to use QQLight API in any language you like via WebSocket.\\r\\r"
         "GitHub:\\rhttps://github.com/Chocolatl/qqlight-websocket\",\r\n"
@@ -221,6 +221,16 @@ void wsClientTextDataHandle(const char* payload, uint64_t payloadLen, SOCKET soc
         free((void*)gbkText);
 
         sendAcceptJSON(socket, v_id);
+
+    }  else if (METHOD_IS("sendQzone")) {
+
+        PARAMS_CHECK(e_content);
+
+        const char* result = GBKToUTF8(QL_sendQzone(UTF8ToGBK(v_content), authCode));
+
+        sendSuccessJSON(socket, v_id, cJSON_CreateString(result));
+
+        free((void*)result);
 
     } else if (METHOD_IS("withdrawMessage")) {
 
